@@ -14,10 +14,10 @@
     <ClInclude Include="fwEntity.h">
       <Filter>rage</Filter>
     </ClInclude>
-    <ClInclude Include="Mat34V.h">
+    <ClInclude Include="Matrix.h">
       <Filter>rage</Filter>
     </ClInclude>
-    <ClInclude Include="Vec3V.h">
+    <ClInclude Include="Vector.h">
       <Filter>rage</Filter>
     </ClInclude>
   </ItemGroup>

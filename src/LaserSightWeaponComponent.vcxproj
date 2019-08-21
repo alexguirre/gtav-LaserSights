@@ -101,8 +101,8 @@
     <ClInclude Include="CWeaponComponentLaserSight.h" />
     <ClInclude Include="fwEntity.h" />
     <ClInclude Include="LaserSight.h" />
-    <ClInclude Include="Mat34V.h" />
-    <ClInclude Include="Vec3V.h" />
+    <ClInclude Include="Matrix.h" />
+    <ClInclude Include="Vector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

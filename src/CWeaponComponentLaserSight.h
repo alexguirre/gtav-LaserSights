@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
-#include "Vec3V.h"
+#include "Vector.h"
 #include "fwEntity.h"
 
 class CWeaponBoneId
