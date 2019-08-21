@@ -8,6 +8,7 @@
       <Filter>dependencies\patterns</Filter>
     </ClCompile>
     <ClCompile Include="CCoronas.cpp" />
+    <ClCompile Include="Addresses.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CWeaponComponentLaserSight.h" />
@@ -22,6 +23,8 @@
       <Filter>rage</Filter>
     </ClInclude>
     <ClInclude Include="CCoronas.h" />
+    <ClInclude Include="Addresses.h" />
+    <ClInclude Include="Hooking.Helper.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dependencies">

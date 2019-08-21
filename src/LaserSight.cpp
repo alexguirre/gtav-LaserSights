@@ -3,12 +3,12 @@
 #include "CWeaponComponentLaserSight.h"
 #include "CCoronas.h"
 #include <spdlog/spdlog.h>
+#include "Hooking.Helper.h"
+#include "Addresses.h"
 
 static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end, uint32_t color)
 {
-	static void* addr = hook::get_pattern("48 8B DA 48 8B F9 E8 ? ? ? ? 84 C0 74 3F", -0xF);
-
-	((decltype(&CScriptIM_DrawLine))addr)(start, end, color);
+	reinterpret_cast<decltype(&CScriptIM_DrawLine)>(Addresses::CScriptIM_DrawLine)(start, end, color);
 }
 
 static void(*CWeaponComponentLaserSight_Process_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
@@ -40,8 +40,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 void LaserSight::InstallHooks()
 {
-	auto vtableAddr = hook::get_pattern<char>("48 8D 05 ? ? ? ? C7 43 ? ? ? ? ? C6 43 50 00", 3);
-	void** vtable = (void**)(vtableAddr + *(int*)vtableAddr + 4);
+	void** vtable = hook::get_absolute_address<void*>(hook::get_pattern("48 8D 05 ? ? ? ? C7 43 ? ? ? ? ? C6 43 50 00", 3));
 
 	CWeaponComponentLaserSight_Process_orig = reinterpret_cast<decltype(CWeaponComponentLaserSight_Process_orig)>(vtable[3]);
 	CWeaponComponentLaserSight_ProcessPostPreRender_orig = reinterpret_cast<decltype(CWeaponComponentLaserSight_ProcessPostPreRender_orig)>(vtable[4]);

@@ -93,15 +93,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\dependencies\patterns\Hooking.Patterns.cpp" />
+    <ClCompile Include="Addresses.cpp" />
     <ClCompile Include="CCoronas.cpp" />
     <ClCompile Include="CWeaponComponentLaserSight.cpp" />
     <ClCompile Include="LaserSight.cpp" />
     <ClCompile Include="dllmain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Addresses.h" />
     <ClInclude Include="CCoronas.h" />
     <ClInclude Include="CWeaponComponentLaserSight.h" />
     <ClInclude Include="fwEntity.h" />
+    <ClInclude Include="Hooking.Helper.h" />
     <ClInclude Include="LaserSight.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="Vector.h" />
