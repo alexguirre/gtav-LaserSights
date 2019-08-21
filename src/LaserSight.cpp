@@ -27,13 +27,14 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);
 
-		rage::Vec3V startPos = { boneMtx.m[3][0], boneMtx.m[3][1], boneMtx.m[3][2] };
+		rage::Vec3V startPos = boneMtx.Position();
 		rage::Vec3V endPos = *This->m_RaycastHitPosition;
+		rage::Vec3V forwardEndPos = startPos + boneMtx.Forward() * 25.0f;
 
 		CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
+		CScriptIM_DrawLine(startPos, forwardEndPos, 0xFFFF0000);
 
-		// TODO: corona doesn't use the direction of the bone
-		CCoronas::Instance()->Draw(startPos, This->m_ComponentInfo->CoronaSize, 0xFFFF0000, This->m_ComponentInfo->CoronaIntensity, 100.0f, { 0.0f, 1.0f, 0.0f }, 1.0f, 5.5f, 8.5f, 3);
+		CCoronas::Instance()->Draw(startPos, This->m_ComponentInfo->CoronaSize, 0xFFFF0000, This->m_ComponentInfo->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
 	}
 }
 
