@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="CWeaponComponentLaserSight.cpp" />
+    <ClCompile Include="LaserSight.cpp" />
+    <ClCompile Include="..\dependencies\patterns\Hooking.Patterns.cpp">
+      <Filter>dependencies\patterns</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CWeaponComponentLaserSight.h" />
+    <ClInclude Include="LaserSight.h" />
+    <ClInclude Include="fwEntity.h">
+      <Filter>rage</Filter>
+    </ClInclude>
+    <ClInclude Include="Mat34V.h">
+      <Filter>rage</Filter>
+    </ClInclude>
+    <ClInclude Include="Vec3V.h">
+      <Filter>rage</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="dependencies">
+      <UniqueIdentifier>{8f9a38b9-1dbf-4d33-bfb1-f2b0f2990a2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\patterns">
+      <UniqueIdentifier>{edb7a753-3599-484d-bdb0-87c35b27df77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rage">
+      <UniqueIdentifier>{6ebf6447-66ab-4710-b292-a31f68efe5a2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
