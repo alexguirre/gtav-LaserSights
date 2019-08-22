@@ -50,9 +50,14 @@ public:
 	CWeaponComponentLaserSightInfo* m_ComponentInfo;
 	rage::fwEntity* m_OwnerWeapon;
 	rage::fwEntity* m_ComponentObject;
-	uint8_t padding_20[0x10];
+	uint64_t m_20;
+	uint16_t m_28;
+	uint8_t m_2A;
+	uint8_t padding_2B[0x5];
 	uint32_t m_LaserSightBoneIndex;
-	uint8_t padding_34[0xC];
+	float m_34;
+	float m_38;
+	uint8_t padding_3C[0x4];
 	void* m_RaycastResult;
 	rage::Vec3V* m_RaycastHitPosition;
 	bool m_HasRaycastHit;
