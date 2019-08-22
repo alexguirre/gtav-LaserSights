@@ -22,7 +22,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 {
 	CWeaponComponentLaserSight_ProcessPostPreRender_orig(This, entity);
 
-	if (This->m_OwnerWeapon && This->m_ComponentObject/* && This->m_HasRaycastHit*/)
+	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);
