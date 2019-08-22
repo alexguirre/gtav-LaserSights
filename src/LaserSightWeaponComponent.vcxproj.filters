@@ -2,16 +2,16 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="CWeaponComponentLaserSight.cpp" />
     <ClCompile Include="LaserSight.cpp" />
     <ClCompile Include="..\dependencies\patterns\Hooking.Patterns.cpp">
       <Filter>dependencies\patterns</Filter>
     </ClCompile>
-    <ClCompile Include="CCoronas.cpp" />
     <ClCompile Include="Addresses.cpp" />
+    <ClCompile Include="CCoronas.cpp">
+      <Filter>five</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CWeaponComponentLaserSight.h" />
     <ClInclude Include="LaserSight.h" />
     <ClInclude Include="fwEntity.h">
       <Filter>rage</Filter>
@@ -22,9 +22,14 @@
     <ClInclude Include="Vector.h">
       <Filter>rage</Filter>
     </ClInclude>
-    <ClInclude Include="CCoronas.h" />
     <ClInclude Include="Addresses.h" />
     <ClInclude Include="Hooking.Helper.h" />
+    <ClInclude Include="CCoronas.h">
+      <Filter>five</Filter>
+    </ClInclude>
+    <ClInclude Include="CWeaponComponentLaserSight.h">
+      <Filter>five</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dependencies">
@@ -35,6 +40,9 @@
     </Filter>
     <Filter Include="rage">
       <UniqueIdentifier>{6ebf6447-66ab-4710-b292-a31f68efe5a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="five">
+      <UniqueIdentifier>{dd37aa12-e21a-45b7-8bb4-75c10032f951}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
