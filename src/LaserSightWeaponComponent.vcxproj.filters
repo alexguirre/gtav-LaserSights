@@ -10,6 +10,31 @@
     <ClCompile Include="CCoronas.cpp">
       <Filter>five</Filter>
     </ClCompile>
+    <ClCompile Include="LaserBeam.cpp" />
+    <ClCompile Include="fiAssetManager.cpp">
+      <Filter>rage</Filter>
+    </ClCompile>
+    <ClCompile Include="grmShaderFactory.cpp">
+      <Filter>rage\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="grcDevice.cpp">
+      <Filter>rage\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\minhook\src\buffer.c">
+      <Filter>dependencies\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\minhook\src\hook.c">
+      <Filter>dependencies\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\minhook\src\trampoline.c">
+      <Filter>dependencies\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\minhook\src\hde\hde32.c">
+      <Filter>dependencies\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependencies\minhook\src\hde\hde64.c">
+      <Filter>dependencies\minhook</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LaserSight.h" />
@@ -30,6 +55,22 @@
     <ClInclude Include="CWeaponComponentLaserSight.h">
       <Filter>five</Filter>
     </ClInclude>
+    <ClInclude Include="LaserBeam.h" />
+    <ClInclude Include="fiAssetManager.h">
+      <Filter>rage</Filter>
+    </ClInclude>
+    <ClInclude Include="grmShaderFactory.h">
+      <Filter>rage\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="atArray.h">
+      <Filter>rage</Filter>
+    </ClInclude>
+    <ClInclude Include="grcTexture.h">
+      <Filter>rage\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="grcDevice.h">
+      <Filter>rage\graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dependencies">
@@ -43,6 +84,12 @@
     </Filter>
     <Filter Include="five">
       <UniqueIdentifier>{dd37aa12-e21a-45b7-8bb4-75c10032f951}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rage\graphics">
+      <UniqueIdentifier>{2706379b-03f3-4f09-8832-3e591899f893}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\minhook">
+      <UniqueIdentifier>{81ace18d-72bf-4623-8e2b-c8da78d61090}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

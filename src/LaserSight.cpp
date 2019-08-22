@@ -5,6 +5,7 @@
 #include <spdlog/spdlog.h>
 #include "Hooking.Helper.h"
 #include "Addresses.h"
+#include "LaserBeam.h"
 
 static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end, uint32_t color)
 {
@@ -35,6 +36,8 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		CScriptIM_DrawLine(startPos, forwardEndPos, 0xFFFF0000);
 
 		CCoronas::Instance()->Draw(startPos, This->m_ComponentInfo->CoronaSize, 0xFFFF0000, This->m_ComponentInfo->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
+	
+		LaserBeam::DrawBeam(startPos, forwardEndPos, boneMtx.Up());
 	}
 }
 

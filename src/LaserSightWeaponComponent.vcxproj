@@ -61,7 +61,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>..\dependencies\spdlog\include;..\dependencies\patterns;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\dependencies\minhook\include;..\dependencies\spdlog\include;..\dependencies\patterns;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -81,7 +81,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>..\dependencies\spdlog\include;..\dependencies\patterns;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\dependencies\minhook\include;..\dependencies\spdlog\include;..\dependencies\patterns;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -92,18 +92,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\dependencies\minhook\src\buffer.c" />
+    <ClCompile Include="..\dependencies\minhook\src\hde\hde32.c" />
+    <ClCompile Include="..\dependencies\minhook\src\hde\hde64.c" />
+    <ClCompile Include="..\dependencies\minhook\src\hook.c" />
+    <ClCompile Include="..\dependencies\minhook\src\trampoline.c" />
     <ClCompile Include="..\dependencies\patterns\Hooking.Patterns.cpp" />
     <ClCompile Include="Addresses.cpp" />
     <ClCompile Include="CCoronas.cpp" />
+    <ClCompile Include="fiAssetManager.cpp" />
+    <ClCompile Include="grcDevice.cpp" />
+    <ClCompile Include="grmShaderFactory.cpp" />
+    <ClCompile Include="LaserBeam.cpp" />
     <ClCompile Include="LaserSight.cpp" />
     <ClCompile Include="dllmain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Addresses.h" />
+    <ClInclude Include="atArray.h" />
     <ClInclude Include="CCoronas.h" />
     <ClInclude Include="CWeaponComponentLaserSight.h" />
+    <ClInclude Include="fiAssetManager.h" />
     <ClInclude Include="fwEntity.h" />
+    <ClInclude Include="grcDevice.h" />
+    <ClInclude Include="grcTexture.h" />
+    <ClInclude Include="grmShaderFactory.h" />
     <ClInclude Include="Hooking.Helper.h" />
+    <ClInclude Include="LaserBeam.h" />
     <ClInclude Include="LaserSight.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="Vector.h" />
