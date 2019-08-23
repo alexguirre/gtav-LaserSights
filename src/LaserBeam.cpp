@@ -44,7 +44,9 @@ struct BeamDrawCall
 };
 static std::array<BeamDrawCall, 256> g_BeamDrawCalls;
 static int g_BeamDrawCallCount;
-static std::mutex g_BeamDrawCallsMutex;
+// copy of the draw calls to be used in the render thread
+static std::array<BeamDrawCall, 256> g_BeamDrawCallsRender;
+static int g_BeamDrawCallCountRender;
 
 static rage::grcTexture* GetTextureFromGraphicsTxd(uint32_t nameHash)
 {
@@ -149,9 +151,7 @@ static void RenderBeams()
 		spdlog::debug("LaserTexture:{}", reinterpret_cast<void*>(g_LaserBeam.LaserTexture));
 	}
 
-	std::lock_guard<std::mutex> lock(g_BeamDrawCallsMutex);
-
-	if (g_BeamDrawCallCount > 0)
+	if (g_BeamDrawCallCountRender > 0)
 	{
 		rage::grcWorldIdentity();
 		SetShaderVars();
@@ -168,9 +168,9 @@ static void RenderBeams()
 
 			rage::grcDevice::SetVertexDeclaration(g_LaserBeam.VertexDecls.LaserBeam);
 
-			for (int i = 0; i < g_BeamDrawCallCount; i++)
+			for (int i = 0; i < g_BeamDrawCallCountRender; i++)
 			{
-				RenderBeam(g_BeamDrawCalls[i]);
+				RenderBeam(g_BeamDrawCallsRender[i]);
 			}
 
 			g_LaserBeam.Shader->EndPass();
@@ -186,7 +186,7 @@ static void RenderBeams()
 			}
 		}
 
-		g_BeamDrawCallCount = 0;
+		g_BeamDrawCallCountRender = 0;
 	}
 }
 
@@ -273,6 +273,12 @@ static void DrawScriptWorldStuff_detour(uint8_t n)
 {
 	DrawScriptWorldStuff_orig(n);
 
+	// copy the draw calls to the render thread array
+	memmove_s(g_BeamDrawCallsRender.data(), g_BeamDrawCallsRender.size() * sizeof(BeamDrawCall),
+		g_BeamDrawCalls.data(), g_BeamDrawCallCount * sizeof(BeamDrawCall));
+	g_BeamDrawCallCountRender = g_BeamDrawCallCount;
+	g_BeamDrawCallCount = 0;
+
 	AddDrawCommandCallback(RenderBeams);
 }
 
@@ -292,10 +298,8 @@ void LaserBeam::InstallHooks()
 	MH_CreateHook(hook::get_pattern("40 53 48 83 EC 20 8B D9 F6 C1 01 74 18"), DrawScriptWorldStuff_detour, reinterpret_cast<void**>(&DrawScriptWorldStuff_orig));
 }
 
-// TODO: reduce DrawBeam flickering
 void LaserBeam::DrawBeam(const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& upVector)
 {
-	std::lock_guard<std::mutex> lock(g_BeamDrawCallsMutex);
 	if (g_BeamDrawCallCount < g_BeamDrawCalls.size())
 	{
 		g_BeamDrawCalls[g_BeamDrawCallCount] = { from, to, upVector };
