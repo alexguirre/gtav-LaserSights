@@ -42,6 +42,19 @@ namespace rage
 		inline float Length() const { return _mm_cvtss_f32(_mm_sqrt_ss(_mm_dp_ps(v, v, 0b01110001))); }
 		inline float LengthSquared() const { return _mm_cvtss_f32(_mm_dp_ps(v, v, 0b01110001)); }
 		inline Vec3V Normalized() const { return _mm_mul_ps(v, _mm_rsqrt_ps(_mm_dp_ps(v, v, 0b01111111))); }
+		
+		inline Vec3V Cross(const Vec3V& b) const
+		{
+			// t = (aY, aZ, aX) * (bZ, bX, bY) // element wise multiplication
+			// u = (aZ, aX, aY) * (bY, bZ, bX)
+			// r = t - u
+
+			__m128 t = _mm_mul_ps(_mm_shuffle_ps(v, v, _MM_SHUFFLE(3, 0, 2, 1)), _mm_shuffle_ps(b.v, b.v, _MM_SHUFFLE(3, 1, 0, 2)));
+			__m128 u = _mm_mul_ps(_mm_shuffle_ps(v, v, _MM_SHUFFLE(3, 1, 0, 2)), _mm_shuffle_ps(b.v, b.v, _MM_SHUFFLE(3, 0, 2, 1)));
+			return _mm_sub_ps(t, u);
+		}
+
+		inline void Normalize() { v = this->Normalized().v; }
 
 		inline Vec3V operator+(const Vec3V& other) const { return _mm_add_ps(v, other.v); }
 		inline Vec3V operator-(const Vec3V& other) const { return _mm_sub_ps(v, other.v); }
@@ -99,6 +112,8 @@ namespace rage
 		inline float Length() const { return _mm_cvtss_f32(_mm_sqrt_ss(_mm_dp_ps(v, v, 0b01110001))); }
 		inline float LengthSquared() const { return _mm_cvtss_f32(_mm_dp_ps(v, v, 0b01110001)); }
 		inline Vec4V Normalized() const { return _mm_mul_ps(v, _mm_rsqrt_ps(_mm_dp_ps(v, v, 0b01111111))); }
+
+		inline void Normalize() { v = this->Normalized().v; }
 
 		inline Vec4V operator+(const Vec4V& other) const { return _mm_add_ps(v, other.v); }
 		inline Vec4V operator-(const Vec4V& other) const { return _mm_sub_ps(v, other.v); }
