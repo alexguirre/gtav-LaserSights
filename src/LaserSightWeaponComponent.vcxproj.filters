@@ -35,6 +35,9 @@
     <ClCompile Include="..\dependencies\minhook\src\hde\hde64.c">
       <Filter>dependencies\minhook</Filter>
     </ClCompile>
+    <ClCompile Include="camBaseCamera.cpp">
+      <Filter>five</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LaserSight.h" />
@@ -70,6 +73,9 @@
     </ClInclude>
     <ClInclude Include="grcDevice.h">
       <Filter>rage\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="camBaseCamera.h">
+      <Filter>five</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

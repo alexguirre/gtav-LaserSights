@@ -6,6 +6,7 @@
 #include "Hooking.Helper.h"
 #include "Addresses.h"
 #include "LaserBeam.h"
+#include "camBaseCamera.h"
 
 static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end, uint32_t color)
 {
@@ -36,8 +37,18 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		CScriptIM_DrawLine(startPos, forwardEndPos, 0xFFFF0000);
 
 		CCoronas::Instance()->Draw(startPos, This->m_ComponentInfo->CoronaSize, 0xFFFF0000, This->m_ComponentInfo->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
-	
-		LaserBeam::DrawBeam(startPos, forwardEndPos, boneMtx.Up());
+
+		{
+			const rage::Mat34V& camMtx = camBaseCamera::GetCurrentCamera()->GetTransform();
+
+			// based on arbitrary axis billboards: http://nehe.gamedev.net/article/billboarding_how_to/18011/
+			const rage::Vec3V center = (startPos + forwardEndPos) * 0.5f;
+			const rage::Vec3V look = camMtx.Position() - center;
+			const rage::Vec3V& up = boneMtx.Forward();
+			const rage::Vec3V right = up.Cross(look).Normalized();
+
+			LaserBeam::DrawBeam(startPos, forwardEndPos, right);
+		}
 	}
 }
 

@@ -64,3 +64,5 @@ void* const Addresses::RageMatricesBuffer =
 	hook::get_absolute_address(hook::get_pattern("48 8B 0D ? ? ? ? BA ? ? ? ? E8 ? ? ? ? 48 8B D3", 3));
 
 void* const Addresses::AddDrawCommandCallback = hook::get_pattern("E8 ? ? ? ? 33 D2 8D 4A 10 E8 ? ? ? ? 48 85 C0 74 04", -0x15);
+
+void* const Addresses::CurrentCamera = hook::get_absolute_address(hook::get_pattern("48 8B 1D ? ? ? ? 0F 29 70 E8 48 8B F2", 3));

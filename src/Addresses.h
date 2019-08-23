@@ -28,5 +28,6 @@ public:
 	static void* const D3D11DeviceContext;
 	static void* const RageMatricesBuffer;
 	static void* const AddDrawCommandCallback;
+	static void* const CurrentCamera;
 };
 
