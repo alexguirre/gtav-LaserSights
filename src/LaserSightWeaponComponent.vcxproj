@@ -107,6 +107,7 @@
     <ClCompile Include="LaserBeam.cpp" />
     <ClCompile Include="LaserSight.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="WorldProbe.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Addresses.h" />
@@ -124,6 +125,7 @@
     <ClInclude Include="LaserSight.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="Vector.h" />
+    <ClInclude Include="WorldProbe.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

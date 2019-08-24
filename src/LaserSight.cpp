@@ -7,6 +7,7 @@
 #include "Addresses.h"
 #include "LaserBeam.h"
 #include "camBaseCamera.h"
+#include "WorldProbe.h"
 
 static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end, uint32_t color)
 {
@@ -31,12 +32,41 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 		rage::Vec3V startPos = boneMtx.Position();
 		rage::Vec3V endPos = *This->m_RaycastHitPosition;
-		rage::Vec3V forwardEndPos = startPos + boneMtx.Forward() * 25.0f;
+		rage::Vec3V forwardEndPos = startPos + boneMtx.Forward() * 100.0f;
 
 		CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
 		CScriptIM_DrawLine(startPos, forwardEndPos, 0xFFFF0000);
 
 		CCoronas::Instance()->Draw(startPos, This->m_ComponentInfo->CoronaSize, 0xFFFF0000, This->m_ComponentInfo->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
+		
+		{
+			static WorldProbe::CShapeTestResults* results = new WorldProbe::CShapeTestResults(1);
+
+			results->AbortTest();
+			WorldProbe::CShapeTestProbeDesc desc;
+			desc.SetResultsStructure(results);
+			desc.m_Flags1 = 256; // flags copied from game code
+			desc.m_Flags2 = 0xE1134C2;
+			desc.m_Start = startPos;
+			desc.m_End = forwardEndPos;
+			desc.m_84C = 8;
+
+			WorldProbe::GetShapeTestManager()->SubmitTest(desc, false);
+
+			if (results->m_State == 4 && results->m_HitCount > 0)
+			{
+				for (int i = 0; i < results->m_HitCount; i++)
+				{
+					WorldProbe::CShapeTestHit* hit = &results->m_Hits[i];
+
+					LaserBeam::DrawDot(hit->m_Position, hit->m_SurfaceNormal);
+
+					forwardEndPos = hit->m_Position;
+				}
+
+				results->AbortTest();
+			}
+		}
 
 		{
 			const rage::Mat34V& camMtx = camBaseCamera::GetCurrentCamera()->GetTransform();

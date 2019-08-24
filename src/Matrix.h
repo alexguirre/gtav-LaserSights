@@ -70,6 +70,30 @@ namespace rage
 		
 			return identity;
 		}
+
+		static const Mat34V FromNormal(const Vec3V& normal)
+		{
+			static rage::Vec3V xUnit(1.0f, 0.0f, 0.0f);
+			static rage::Vec3V yUnit(0.0f, 1.0f, 0.0f);
+
+			// Based on https://gamedev.stackexchange.com/a/22205
+			rage::Vec3V tangent0 = normal.Cross(xUnit);
+			if (tangent0.LengthSquared() < 0.001f)
+			{
+				tangent0 = normal.Cross(yUnit);
+			}
+
+			tangent0.Normalize();
+
+			rage::Vec3V tangent1 = normal.Cross(tangent0).Normalized();
+
+			return Mat34V(
+				tangent0,
+				tangent1,
+				normal,
+				rage::Vec3V(0.0f, 0.0f, 0.0f)
+			);
+		}
 	};
 	static_assert(sizeof(Mat34V) == 0x40);
 }

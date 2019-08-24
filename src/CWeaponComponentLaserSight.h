@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "Vector.h"
 #include "fwEntity.h"
+#include "WorldProbe.h"
 
 class CWeaponBoneId
 {
@@ -58,7 +59,7 @@ public:
 	float m_34;
 	float m_38;
 	uint8_t padding_3C[0x4];
-	void* m_RaycastResult;
+	WorldProbe::CShapeTestResults* m_RaycastResult;
 	rage::Vec3V* m_RaycastHitPosition;
 	bool m_HasRaycastHit;
 	uint8_t padding_51[0x7];

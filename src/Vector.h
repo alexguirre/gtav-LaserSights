@@ -54,6 +54,8 @@ namespace rage
 			return _mm_sub_ps(t, u);
 		}
 
+		inline float Dot(const Vec3V& b) const { return _mm_cvtss_f32(_mm_dp_ps(v, b.v, 0b01110001)); }
+
 		inline void Normalize() { v = this->Normalized().v; }
 
 		inline Vec3V operator+(const Vec3V& other) const { return _mm_add_ps(v, other.v); }

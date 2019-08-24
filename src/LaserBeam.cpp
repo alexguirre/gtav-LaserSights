@@ -10,6 +10,7 @@
 #include "grcDevice.h"
 #include "Addresses.h"
 #include <MinHook.h>
+#include "Matrix.h"
 
 static struct LaserBeamGlobals
 {
@@ -47,6 +48,17 @@ static int g_BeamDrawCallCount;
 // copy of the draw calls to be used in the render thread
 static std::array<BeamDrawCall, 256> g_BeamDrawCallsRender;
 static int g_BeamDrawCallCountRender;
+
+struct DotDrawCall
+{
+	rage::Vec3V m_Position;
+	rage::Vec3V m_Normal;
+};
+static std::array<DotDrawCall, 256> g_DotDrawCalls;
+static int g_DotDrawCallCount;
+// copy of the draw calls to be used in the render thread
+static std::array<DotDrawCall, 256> g_DotDrawCallsRender;
+static int g_DotDrawCallCountRender;
 
 static rage::grcTexture* GetTextureFromGraphicsTxd(uint32_t nameHash)
 {
@@ -94,6 +106,32 @@ static void SetLaserBeamVertex(
 	v[17] = texCoord2.w;
 }
 
+static void SetLaserDotVertex(
+	void* buffer, int index,
+	const rage::Vec3V& position,
+	const rage::Vec4V& color,
+	const float texCoord0[2],
+	const rage::Vec3V& normal)
+{
+	float* v = reinterpret_cast<float*>(reinterpret_cast<char*>(buffer) + g_LaserBeam.VertexDecls.LaserDot->m_VertexSize * index);
+	v[0] = position.x;
+	v[1] = position.y;
+	v[2] = position.z;
+	v[3] = color.x;
+	v[4] = color.y;
+	v[5] = color.z;
+	v[6] = color.w;
+	v[7] = texCoord0[0];
+	v[8] = texCoord0[1];
+	v[9] = 0.0f;
+	v[10] = 0.0f;
+	v[11] = 0.0f;
+	v[12] = 0.0f;
+	v[13] = normal.x;
+	v[14] = normal.y;
+	v[15] = normal.z;
+}
+
 static void SetShaderVars()
 {
 	g_LaserBeam.Shader->m_Effect->SetVar(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserTexture, g_LaserBeam.LaserTexture);
@@ -118,16 +156,16 @@ static void RenderBeam(const BeamDrawCall& drawCall)
 	rage::Vec3V v3 = drawCall.m_To - drawCall.m_RightVector * W;
 	// TODO: color and other vertex variables customizeble per beam
 	// TODO: decrease visibility of beam based on distance
-	static rage::Vec3V n(0.0f, 1.0f, 0.0f);
-	static rage::Vec4V color(4.9f, 0.24665f, 0.24665f, 0.3f);
-	static rage::Vec4V v0TexCoord0(0.0f, 1.0f, 0.0f, 0.0f);
-	static rage::Vec4V v0TexCoord2(0.015f, 1.0f, 0.0f, 0.0f);
-	static rage::Vec4V v1TexCoord0(0.0f, -1.0f, 0.0f, 0.0f);
-	static rage::Vec4V v1TexCoord2(0.015f, -1.0f, 0.0f, 0.0f);
-	static rage::Vec4V v2TexCoord0(243.5f, 1.0f, 0.0f, 0.0f);
-	static rage::Vec4V v2TexCoord2(0.01528f, 1.0f, 0.0f, 0.0f);
-	static rage::Vec4V v3TexCoord0(243.5f, -1.0f, 0.0f, 0.0f);
-	static rage::Vec4V v3TexCoord2(0.01528f, -1.0f, 0.0f, 0.0f);
+	static const rage::Vec3V n(0.0f, 1.0f, 0.0f);
+	static const rage::Vec4V color(4.9f, 0.24665f, 0.24665f, 0.3f);
+	static const rage::Vec4V v0TexCoord0(0.0f, 1.0f, 0.0f, 0.0f);
+	static const rage::Vec4V v0TexCoord2(0.015f, 1.0f, 0.0f, 0.0f);
+	static const rage::Vec4V v1TexCoord0(0.0f, -1.0f, 0.0f, 0.0f);
+	static const rage::Vec4V v1TexCoord2(0.015f, -1.0f, 0.0f, 0.0f);
+	static const rage::Vec4V v2TexCoord0(243.5f, 1.0f, 0.0f, 0.0f);
+	static const rage::Vec4V v2TexCoord2(0.01528f, 1.0f, 0.0f, 0.0f);
+	static const rage::Vec4V v3TexCoord0(243.5f, -1.0f, 0.0f, 0.0f);
+	static const rage::Vec4V v3TexCoord2(0.01528f, -1.0f, 0.0f, 0.0f);
 
 	void* buffer = rage::grcDevice::BeginVertices(rage::grcDrawMode::TriangleStrip, 4, g_LaserBeam.VertexDecls.LaserBeam->m_VertexSize);
 	SetLaserBeamVertex(buffer, 0, v0, n, v0TexCoord0, color, v0TexCoord2);
@@ -137,19 +175,36 @@ static void RenderBeam(const BeamDrawCall& drawCall)
 	rage::grcDevice::EndVertices();
 }
 
+static void RenderDot(const DotDrawCall& drawCall)
+{
+	static const rage::Vec4V color(1.0f, 0.0f, 0.0f, 0.2f);
+	static const float v0TexCoord[2] = { 0.0f, 1.0f };
+	static const float v1TexCoord[2] = { 0.0f, 0.0f };
+	static const float v2TexCoord[2] = { 1.0f, 1.0f };
+	static const float v3TexCoord[2] = { 1.0f, 0.0f };
+
+	constexpr float dotScale = 0.1f;
+	rage::Mat34V mtx = rage::Mat34V::FromNormal(drawCall.m_Normal);
+	rage::Vec3V forwardScaled = mtx.Forward() * dotScale;
+	rage::Vec3V rightScaled = mtx.Right() * dotScale;
+
+	rage::Vec3V v0 = drawCall.m_Position - forwardScaled - rightScaled;
+	rage::Vec3V v1 = drawCall.m_Position + forwardScaled - rightScaled;
+	rage::Vec3V v2 = drawCall.m_Position - forwardScaled + rightScaled;
+	rage::Vec3V v3 = drawCall.m_Position + forwardScaled + rightScaled;
+
+	void* buffer = rage::grcDevice::BeginVertices(rage::grcDrawMode::TriangleStrip, 4, g_LaserBeam.VertexDecls.LaserDot->m_VertexSize);
+	SetLaserDotVertex(buffer, 0, v0, color, v0TexCoord, drawCall.m_Normal);
+	SetLaserDotVertex(buffer, 1, v1, color, v1TexCoord, drawCall.m_Normal);
+	SetLaserDotVertex(buffer, 2, v2, color, v2TexCoord, drawCall.m_Normal);
+	SetLaserDotVertex(buffer, 3, v3, color, v3TexCoord, drawCall.m_Normal);
+	rage::grcDevice::EndVertices();
+}
+
 static void RenderBeams()
 {
-	if (!g_LaserBeam.LaserTexture)
-	{
-		g_LaserBeam.LaserTexture = GetTextureFromGraphicsTxd(2716504251/*laser*/);
-		spdlog::debug("LaserTexture:{}", reinterpret_cast<void*>(g_LaserBeam.LaserTexture));
-	}
-
 	if (g_BeamDrawCallCountRender > 0)
 	{
-		rage::grcWorldIdentity();
-		SetShaderVars();
-
 		ID3D11Buffer* cbuffersBackup[2];
 		GetDeviceContext()->VSGetConstantBuffers(0, 2, cbuffersBackup);
 
@@ -181,6 +236,62 @@ static void RenderBeams()
 		}
 
 		g_BeamDrawCallCountRender = 0;
+	}
+}
+
+static void RenderDots()
+{
+	if (g_DotDrawCallCountRender > 0)
+	{
+		ID3D11Buffer* cbuffersBackup[2];
+		GetDeviceContext()->VSGetConstantBuffers(0, 2, cbuffersBackup);
+
+		ID3D11Buffer* cbuffers[2] = { g_LaserBeam.RageMatricesBuffer, g_LaserBeam.LaserParamBuffer };
+		GetDeviceContext()->VSSetConstantBuffers(0, 2, cbuffers);
+
+		if (g_LaserBeam.Shader->BeginDraw(static_cast<rage::grmShader::eDrawType>(0), true, g_LaserBeam.Techniques.LaserDot))
+		{
+			g_LaserBeam.Shader->BeginPass(0);
+
+			rage::grcDevice::SetVertexDeclaration(g_LaserBeam.VertexDecls.LaserDot);
+
+			for (int i = 0; i < g_DotDrawCallCountRender; i++)
+			{
+				RenderDot(g_DotDrawCallsRender[i]);
+			}
+
+			g_LaserBeam.Shader->EndPass();
+			g_LaserBeam.Shader->EndDraw();
+		}
+
+		GetDeviceContext()->VSSetConstantBuffers(0, 2, cbuffersBackup);
+		for (int i = 0; i < ARRAYSIZE(cbuffersBackup); i++)
+		{
+			if (cbuffersBackup[i])
+			{
+				cbuffersBackup[i]->Release();
+			}
+		}
+
+		g_DotDrawCallCountRender = 0;
+	}
+}
+
+static void Render()
+{
+	if (!g_LaserBeam.LaserTexture)
+	{
+		g_LaserBeam.LaserTexture = GetTextureFromGraphicsTxd(2716504251/*laser*/);
+		spdlog::debug("LaserTexture:{}", reinterpret_cast<void*>(g_LaserBeam.LaserTexture));
+	}
+
+	if (g_BeamDrawCallCountRender > 0 || g_DotDrawCallCountRender > 0)
+	{
+		rage::grcWorldIdentity();
+		SetShaderVars();
+
+		RenderDots();
+		RenderBeams();
 	}
 }
 
@@ -273,7 +384,12 @@ static void DrawScriptWorldStuff_detour(uint8_t n)
 	g_BeamDrawCallCountRender = g_BeamDrawCallCount;
 	g_BeamDrawCallCount = 0;
 
-	AddDrawCommandCallback(RenderBeams);
+	memmove_s(g_DotDrawCallsRender.data(), g_DotDrawCallsRender.size() * sizeof(DotDrawCall),
+		g_DotDrawCalls.data(), g_DotDrawCallCount * sizeof(DotDrawCall));
+	g_DotDrawCallCountRender = g_DotDrawCallCount;
+	g_DotDrawCallCount = 0;
+
+	AddDrawCommandCallback(Render);
 }
 
 void LaserBeam::InstallHooks()
@@ -298,5 +414,14 @@ void LaserBeam::DrawBeam(const rage::Vec3V& from, const rage::Vec3V& to, const r
 	{
 		g_BeamDrawCalls[g_BeamDrawCallCount] = { from, to, rightVector };
 		g_BeamDrawCallCount++;
+	}
+}
+
+void LaserBeam::DrawDot(const rage::Vec3V& position, const rage::Vec3V& normal)
+{
+	if (g_DotDrawCallCount < g_DotDrawCalls.size())
+	{
+		g_DotDrawCalls[g_DotDrawCallCount] = { position, normal };
+		g_DotDrawCallCount++;
 	}
 }

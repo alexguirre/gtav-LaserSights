@@ -38,6 +38,9 @@
     <ClCompile Include="camBaseCamera.cpp">
       <Filter>five</Filter>
     </ClCompile>
+    <ClCompile Include="WorldProbe.cpp">
+      <Filter>five</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LaserSight.h" />
@@ -75,6 +78,9 @@
       <Filter>rage\graphics</Filter>
     </ClInclude>
     <ClInclude Include="camBaseCamera.h">
+      <Filter>five</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldProbe.h">
       <Filter>five</Filter>
     </ClInclude>
   </ItemGroup>

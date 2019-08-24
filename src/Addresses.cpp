@@ -66,3 +66,12 @@ void* const Addresses::RageMatricesBuffer =
 void* const Addresses::AddDrawCommandCallback = hook::get_pattern("E8 ? ? ? ? 33 D2 8D 4A 10 E8 ? ? ? ? 48 85 C0 74 04", -0x15);
 
 void* const Addresses::CurrentCamera = hook::get_absolute_address(hook::get_pattern("48 8B 1D ? ? ? ? 0F 29 70 E8 48 8B F2", 3));
+
+void* const Addresses::WorldProbe_CShapeTestResults_AbortTest = hook::get_pattern("48 89 5C 24 ? 57 48 83 EC 20 83 79 04 03 48 8B D9 75 10");
+
+void* const Addresses::WorldProbe_CShapeTestDesc_SetResultsStructure = hook::get_pattern("48 8B D9 48 89 51 10 48 85 D2 74 34", -0xD);
+
+void* const Addresses::WorldProbe_CShapeTestManager_SubmitTest = hook::get_pattern("40 55 48 81 EC ? ? ? ? 48 8D 6C 24 ? 48 89 9D ? ? ? ?");
+
+void* const Addresses::WorldProbe_GetShapeTestManager =
+	hook::get_absolute_address(hook::get_pattern("0F 94 C3 E8 ? ? ? ? 44 8B C3 48 8B C8", 4));
