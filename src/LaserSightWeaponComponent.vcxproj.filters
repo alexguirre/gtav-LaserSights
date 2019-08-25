@@ -41,6 +41,9 @@
     <ClCompile Include="WorldProbe.cpp">
       <Filter>five</Filter>
     </ClCompile>
+    <ClCompile Include="Hashing.cpp">
+      <Filter>rage</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LaserSight.h" />
@@ -82,6 +85,9 @@
     </ClInclude>
     <ClInclude Include="WorldProbe.h">
       <Filter>five</Filter>
+    </ClInclude>
+    <ClInclude Include="Hashing.h">
+      <Filter>rage</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

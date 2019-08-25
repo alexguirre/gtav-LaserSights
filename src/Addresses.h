@@ -25,13 +25,12 @@ public:
 	static void* const grcDevice_BeginVertices;
 	static void* const grcDevice_EndVertices;
 	static void* const grcWorldIdentity;
-	static void* const D3D11DeviceContext;
-	static void* const RageMatricesBuffer;
 	static void* const AddDrawCommandCallback;
 	static void* const CurrentCamera;
 	static void* const WorldProbe_CShapeTestResults_AbortTest;
 	static void* const WorldProbe_CShapeTestDesc_SetResultsStructure;
 	static void* const WorldProbe_CShapeTestManager_SubmitTest;
 	static void* const WorldProbe_GetShapeTestManager;
+	static void* const atDataHash;
 };
 

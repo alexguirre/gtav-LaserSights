@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <d3d11.h>
 #include "grcTexture.h"
 #include "atArray.h"
 
@@ -9,6 +10,33 @@ namespace rage
 	using grcEffectVar__ = uint32_t;
 
 	class grcInstanceData;
+
+	class grcProgram
+	{
+	public:
+		const char* m_Name;
+		atArray<uint32_t> m_LocalVariablesIds;
+		ID3D11Buffer** m_CBuffers;
+		uint32_t m_CBuffersHash;
+		uint8_t m_CBuffersStartSlot;
+		uint8_t m_CBuffersEndSlot;
+		uint8_t padding_2E[0x20A];
+
+		virtual ~grcProgram() = 0;
+	};
+	static_assert(sizeof(grcProgram) == 0x238);
+
+	class grcVertexProgram : public grcProgram
+	{
+	public:
+		uint8_t padding_238[0x10];
+	};
+	static_assert(sizeof(grcVertexProgram) == 0x248);
+
+	class grcFragmentProgram : public grcProgram
+	{
+	};
+	static_assert(sizeof(grcFragmentProgram) == 0x238);
 
 	class grcEffectTechniquePass
 	{
@@ -41,7 +69,9 @@ namespace rage
 	public:
 		atArray<grcEffectTechnique> m_Techniques;
 		uint8_t padding_10[0x10];
-		void** m_LocalBuffers;
+		atArray<void*> m_LocalBuffers; // atArray<grcBufferD3D11*>
+		atArray<grcVertexProgram> m_VertexPrograms;
+		atArray<grcFragmentProgram> m_FragmentPrograms;
 		// ...
 
 		grcEffectVar__ LookupVar(const char* name);

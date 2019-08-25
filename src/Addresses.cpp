@@ -57,12 +57,6 @@ void* const Addresses::grcDevice_EndVertices =
 
 void* const Addresses::grcWorldIdentity = hook::get_pattern("48 8B C4 48 83 EC 68 0F 28 05 ? ? ? ? 0F 28 0D ? ? ? ?");
 
-void* const Addresses::D3D11DeviceContext =
-	hook::get_absolute_address(hook::get_pattern("48 8D 05 ? ? ? ? 45 33 C9 48 89 44 24 ? 48 8D 85 ? ? ? ?", 3));
-
-void* const Addresses::RageMatricesBuffer =
-	hook::get_absolute_address(hook::get_pattern("48 8B 0D ? ? ? ? BA ? ? ? ? E8 ? ? ? ? 48 8B D3", 3));
-
 void* const Addresses::AddDrawCommandCallback = hook::get_pattern("E8 ? ? ? ? 33 D2 8D 4A 10 E8 ? ? ? ? 48 85 C0 74 04", -0x15);
 
 void* const Addresses::CurrentCamera = hook::get_absolute_address(hook::get_pattern("48 8B 1D ? ? ? ? 0F 29 70 E8 48 8B F2", 3));
@@ -75,3 +69,5 @@ void* const Addresses::WorldProbe_CShapeTestManager_SubmitTest = hook::get_patte
 
 void* const Addresses::WorldProbe_GetShapeTestManager =
 	hook::get_absolute_address(hook::get_pattern("0F 94 C3 E8 ? ? ? ? 44 8B C3 48 8B C8", 4));
+
+void* const Addresses::atDataHash = hook::get_pattern("48 83 EC 28 E8 ? ? ? ? 8D 04 C0 8B C8");
