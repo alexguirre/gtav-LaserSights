@@ -23,7 +23,7 @@ static struct LaserBeamGlobals
 	} Techniques;
 	struct
 	{
-		rage::grcEffectVar__ LaserTexture;
+		rage::grcEffectVar__ LaserSampler;
 		rage::grcEffectVar__ gMaxDisplacement;
 		rage::grcEffectVar__ gCameraDistanceAtMaxDisplacement;
 		rage::grcEffectVar__ LaserVisibilityMinMax;
@@ -119,7 +119,7 @@ static void SetLaserDotVertex(
 
 static void SetShaderVars()
 {
-	g_LaserBeam.Shader->m_Effect->SetVar(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserTexture, g_LaserBeam.LaserTexture);
+	g_LaserBeam.Shader->m_Effect->SetVar(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserSampler, g_LaserBeam.LaserTexture);
 
 	// TODO: shader variables customizeble per beam
 	float LaserVisibilityMinMax[4] = { 0.2f, 100.0f, 0.0f, 0.0f };
@@ -133,7 +133,7 @@ static void SetShaderVars()
 
 static void RenderBeam(const BeamDrawCall& drawCall)
 {
-	constexpr float W = 0.015f;
+	constexpr float W = 0.01f;
 
 	rage::Vec3V v0 = drawCall.m_From + drawCall.m_RightVector * W;
 	rage::Vec3V v1 = drawCall.m_From - drawCall.m_RightVector * W;
@@ -276,13 +276,13 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 	spdlog::debug("  LaserDot:{}", g_LaserBeam.Techniques.LaserDot);
 
 	// lookup vars
-	g_LaserBeam.Vars.LaserTexture = effect->LookupVar("LaserTexture");
+	g_LaserBeam.Vars.LaserSampler = effect->LookupVar("LaserSampler");
 	g_LaserBeam.Vars.gMaxDisplacement = effect->LookupVar("gMaxDisplacement");
 	g_LaserBeam.Vars.gCameraDistanceAtMaxDisplacement = effect->LookupVar("gCameraDistanceAtMaxDisplacement");
 	g_LaserBeam.Vars.LaserVisibilityMinMax = effect->LookupVar("LaserVisibilityMinMax");
 
 	spdlog::debug("Vars:");
-	spdlog::debug("  LaserTexture:{}", g_LaserBeam.Vars.LaserTexture);
+	spdlog::debug("  LaserSampler:{}", g_LaserBeam.Vars.LaserSampler);
 	spdlog::debug("  gMaxDisplacement:{}", g_LaserBeam.Vars.gMaxDisplacement);
 	spdlog::debug("  gCameraDistanceAtMaxDisplacement:{}", g_LaserBeam.Vars.gCameraDistanceAtMaxDisplacement);
 	spdlog::debug("  LaserVisibilityMinMax:{}", g_LaserBeam.Vars.LaserVisibilityMinMax);
@@ -313,63 +313,6 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 	spdlog::debug("Vertex Declarations:");
 	spdlog::debug("  LaserBeam:{}", reinterpret_cast<void*>(g_LaserBeam.VertexDecls.LaserBeam));
 	spdlog::debug("  LaserDot:{}", reinterpret_cast<void*>(g_LaserBeam.VertexDecls.LaserDot));
-
-	// Fix up the constant buffers of the shader programs we use.
-	//   In the `laserbeam` shader, the programs have the `rage_matrices` global buffer in register 0 and the `LaserParam`
-	//   local buffer, in register 1, because it was ported from MP3.
-	//   But in GTAV all shaders have `rage_matrices` in register 1 and since it is global only one instance is created which
-	//   has the register field set to 1. When the game builds the cbuffers array for each program, only one of the buffers
-	//   ends up assigned to it since both use the register 1.
-	//   This workaround rebuilds the cbuffers arrays correctly, so `rage_matrices` is assigned to register 0 and `LaserParam` to register 1.
-	{
-		constexpr int VSLaserBeamIndex = 0;
-		constexpr int VSLaserDotIndex = 1;
-		constexpr int PSLaserBeamIndex = 1;
-		constexpr int MaxCBuffers = 0x70 / sizeof(void*);
-
-		// find relevant buffers
-		char* laserParam = reinterpret_cast<char*>(effect->m_LocalBuffers.Items[0]); // LaserParam is the first and only item
-		ID3D11Buffer* laserParamBuffer = *reinterpret_cast<ID3D11Buffer * *>(laserParam + 0x20);
-		ID3D11Buffer* rageMatricesBuffer = effect->m_VertexPrograms.Items[VSLaserBeamIndex].m_CBuffers[1];
-
-		rage::grcVertexProgram* vsLaserBeam = &effect->m_VertexPrograms.Items[VSLaserBeamIndex];
-		rage::grcVertexProgram* vsLaserDot = &effect->m_VertexPrograms.Items[VSLaserDotIndex];
-		rage::grcFragmentProgram* psLaserBeam = &effect->m_FragmentPrograms.Items[PSLaserBeamIndex];
-		// PS_LaserDot not modified here because it doesn't use constant buffers
-
-		// clear cbuffers array
-		for (int i = 0; i < MaxCBuffers; i++)
-		{
-			vsLaserBeam->m_CBuffers[i] = nullptr;
-			vsLaserDot->m_CBuffers[i] = nullptr;
-			psLaserBeam->m_CBuffers[i] = nullptr;
-		}
-
-		// VS_LaserBeam
-		//    cb0 = rage_matrices
-		vsLaserBeam->m_CBuffers[0] = rageMatricesBuffer;
-		vsLaserBeam->m_CBuffersStartSlot = 0;
-		vsLaserBeam->m_CBuffersEndSlot = 0;
-
-		// VS_LaserDot
-		//    cb0 = rage_matrices
-		//    cb1 = LaserParam
-		vsLaserDot->m_CBuffers[0] = rageMatricesBuffer;
-		vsLaserDot->m_CBuffers[1] = laserParamBuffer;
-		vsLaserDot->m_CBuffersStartSlot = 0;
-		vsLaserDot->m_CBuffersEndSlot = 1;
-
-		// PS_LaserBeam
-		//    cb1 = LaserParam
-		psLaserBeam->m_CBuffers[1] = laserParamBuffer;
-		psLaserBeam->m_CBuffersStartSlot = 1;
-		psLaserBeam->m_CBuffersEndSlot = 1;
-
-		// recalculate cbuffers hashes
-		vsLaserBeam->m_CBuffersHash = rage::atDataHash(vsLaserBeam->m_CBuffers, 0x70);
-		vsLaserDot->m_CBuffersHash = rage::atDataHash(vsLaserDot->m_CBuffers, 0x70);
-		psLaserBeam->m_CBuffersHash = rage::atDataHash(psLaserBeam->m_CBuffers, 0x70);
-	}
 }
 
 static void AddDrawCommandCallback(void(*cb)())
