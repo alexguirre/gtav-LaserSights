@@ -32,5 +32,6 @@ public:
 	static void* const WorldProbe_CShapeTestManager_SubmitTest;
 	static void* const WorldProbe_GetShapeTestManager;
 	static void* const atDataHash;
+	static void* const aiTaskTree_FindTaskByTypeActive;
 };
 

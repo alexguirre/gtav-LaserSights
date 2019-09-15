@@ -71,3 +71,5 @@ void* const Addresses::WorldProbe_GetShapeTestManager =
 	hook::get_absolute_address(hook::get_pattern("0F 94 C3 E8 ? ? ? ? 44 8B C3 48 8B C8", 4));
 
 void* const Addresses::atDataHash = hook::get_pattern("48 83 EC 28 E8 ? ? ? ? 8D 04 C0 8B C8");
+
+void* const Addresses::aiTaskTree_FindTaskByTypeActive = hook::get_pattern("83 79 10 FF 74 20 48 63 41 10");

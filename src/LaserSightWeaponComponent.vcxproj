@@ -99,6 +99,7 @@
     <ClCompile Include="..\dependencies\minhook\src\trampoline.c" />
     <ClCompile Include="..\dependencies\patterns\Hooking.Patterns.cpp" />
     <ClCompile Include="Addresses.cpp" />
+    <ClCompile Include="aiTask.cpp" />
     <ClCompile Include="camBaseCamera.cpp" />
     <ClCompile Include="CCoronas.cpp" />
     <ClCompile Include="fiAssetManager.cpp" />
@@ -112,9 +113,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Addresses.h" />
+    <ClInclude Include="aiTask.h" />
     <ClInclude Include="atArray.h" />
     <ClInclude Include="camBaseCamera.h" />
     <ClInclude Include="CCoronas.h" />
+    <ClInclude Include="CTaskAimGun.h" />
     <ClInclude Include="CWeaponComponentLaserSight.h" />
     <ClInclude Include="fiAssetManager.h" />
     <ClInclude Include="fwEntity.h" />

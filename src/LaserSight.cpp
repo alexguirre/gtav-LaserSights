@@ -8,10 +8,26 @@
 #include "LaserBeam.h"
 #include "camBaseCamera.h"
 #include "WorldProbe.h"
+#include "CTaskAimGun.h"
 
 static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end, uint32_t color)
 {
 	reinterpret_cast<decltype(&CScriptIM_DrawLine)>(Addresses::CScriptIM_DrawLine)(start, end, color);
+}
+
+static rage::aiTaskTree* GetPedTaskTree(rage::fwEntity* ped)
+{
+	// TODO: get offsets from patterns
+	static const int IntelligenceOffset = 0x10B0;
+	static const int TaskManagerOffset = 0x360;
+	static const int TaskTreeOffset = 0x0;
+
+	uint8_t* p = reinterpret_cast<uint8_t*>(ped);
+	uint8_t* intelligence = *reinterpret_cast<uint8_t**>(p + IntelligenceOffset);
+	uint8_t* taskMgr = reinterpret_cast<uint8_t*>(intelligence + TaskManagerOffset);
+	rage::aiTaskTree* taskTree = *reinterpret_cast<rage::aiTaskTree**>(taskMgr + TaskTreeOffset);
+
+	return taskTree;
 }
 
 static void(*CWeaponComponentLaserSight_Process_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
@@ -30,26 +46,46 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);
 
-		rage::Vec3V startPos = boneMtx.Position();
-		rage::Vec3V endPos = *This->m_RaycastHitPosition;
-		rage::Vec3V forwardEndPos = startPos + boneMtx.Forward() * 100.0f;
+		const float Range = 100.0f;
 
-		CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
-		CScriptIM_DrawLine(startPos, forwardEndPos, 0xFFFF0000);
+		rage::Vec3V startPos = boneMtx.Position();
+		rage::Vec3V endPos = startPos + boneMtx.Forward() * Range;
+
+		CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
 
 		CCoronas::Instance()->Draw(startPos, This->m_ComponentInfo->CoronaSize, 0xFFFF0000, This->m_ComponentInfo->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
 		
+		if (entity)
+		{
+			constexpr uint32_t CTaskAimGunOnFoot = 4;
+			constexpr uint32_t CTaskAimGunVehicleDriveBy = 295;
+			constexpr uint32_t CTaskAimGunBlindFire = 304;
+
+			rage::aiTaskTree* taskTree = GetPedTaskTree(entity);
+			rage::aiTask* task = nullptr;
+			if ((task = taskTree->FindTaskByTypeActive(CTaskAimGunOnFoot)) ||
+				(task = taskTree->FindTaskByTypeActive(CTaskAimGunVehicleDriveBy)) ||
+				(task = taskTree->FindTaskByTypeActive(CTaskAimGunBlindFire)))
+			{
+				CTaskAimGun* aimTask = reinterpret_cast<CTaskAimGun*>(task);
+				aimTask->DoShapeTest(entity, &startPos, &endPos, nullptr, nullptr, false);
+			}
+		}
+
 		{
 			static WorldProbe::CShapeTestResults* results = new WorldProbe::CShapeTestResults(1);
 
 			results->AbortTest();
 			WorldProbe::CShapeTestProbeDesc desc;
 			desc.SetResultsStructure(results);
+			// TODO: find more appropriate shapetest flags
 			desc.m_Flags1 = 256; // flags copied from game code
 			desc.m_Flags2 = 0xE1134C2;
 			desc.m_Start = startPos;
-			desc.m_End = forwardEndPos;
+			desc.m_End = endPos;
 			desc.m_84C = 8;
+
+			CScriptIM_DrawLine(startPos, endPos, 0xFF00FF00);
 
 			WorldProbe::GetShapeTestManager()->SubmitTest(desc, false);
 
@@ -61,7 +97,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 					LaserBeam::DrawDot(hit->m_Position, hit->m_SurfaceNormal);
 
-					forwardEndPos = hit->m_Position;
+					endPos = hit->m_Position;
 				}
 
 				results->AbortTest();
@@ -69,15 +105,18 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		}
 
 		{
+			startPos = boneMtx.Position();
 			const rage::Mat34V& camMtx = camBaseCamera::GetCurrentCamera()->GetTransform();
 
 			// based on arbitrary axis billboards: http://nehe.gamedev.net/article/billboarding_how_to/18011/
-			const rage::Vec3V center = (startPos + forwardEndPos) * 0.5f;
+			const rage::Vec3V center = (startPos + endPos) * 0.5f;
 			const rage::Vec3V look = camMtx.Position() - center;
-			const rage::Vec3V& up = boneMtx.Forward();
+			const rage::Vec3V& up = (endPos - startPos).Normalized();
 			const rage::Vec3V right = up.Cross(look).Normalized();
 
-			LaserBeam::DrawBeam(startPos, forwardEndPos, right);
+			CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
+
+			LaserBeam::DrawBeam(startPos, endPos, right);
 		}
 	}
 }

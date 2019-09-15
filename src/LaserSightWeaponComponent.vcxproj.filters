@@ -44,6 +44,9 @@
     <ClCompile Include="Hashing.cpp">
       <Filter>rage</Filter>
     </ClCompile>
+    <ClCompile Include="aiTask.cpp">
+      <Filter>rage</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LaserSight.h" />
@@ -88,6 +91,12 @@
     </ClInclude>
     <ClInclude Include="Hashing.h">
       <Filter>rage</Filter>
+    </ClInclude>
+    <ClInclude Include="aiTask.h">
+      <Filter>rage</Filter>
+    </ClInclude>
+    <ClInclude Include="CTaskAimGun.h">
+      <Filter>five</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
