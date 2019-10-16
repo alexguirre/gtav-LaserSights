@@ -44,12 +44,6 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{
-		if (This->m_ComponentInfo)
-		{
-			auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
-			spdlog::info("{}: BeamWidth={}", reinterpret_cast<void*>(This), info->BeamWidth);
-		}
-
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);
 
@@ -123,7 +117,8 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 			CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
 
-			LaserBeam::DrawBeam(startPos, endPos, right);
+			const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
+			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right);
 		}
 	}
 }

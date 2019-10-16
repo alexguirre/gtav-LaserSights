@@ -38,6 +38,7 @@ static struct LaserBeamGlobals
 
 struct BeamDrawCall
 {
+	float HalfWidth;
 	rage::Vec3V m_From;
 	rage::Vec3V m_To;
 	rage::Vec3V m_RightVector;
@@ -133,12 +134,10 @@ static void SetShaderVars()
 
 static void RenderBeam(const BeamDrawCall& drawCall)
 {
-	constexpr float W = 0.01f;
-
-	rage::Vec3V v0 = drawCall.m_From + drawCall.m_RightVector * W;
-	rage::Vec3V v1 = drawCall.m_From - drawCall.m_RightVector * W;
-	rage::Vec3V v2 = drawCall.m_To + drawCall.m_RightVector * W;
-	rage::Vec3V v3 = drawCall.m_To - drawCall.m_RightVector * W;
+	const rage::Vec3V v0 = drawCall.m_From + drawCall.m_RightVector * drawCall.HalfWidth;
+	const rage::Vec3V v1 = drawCall.m_From - drawCall.m_RightVector * drawCall.HalfWidth;
+	const rage::Vec3V v2 = drawCall.m_To + drawCall.m_RightVector * drawCall.HalfWidth;
+	const rage::Vec3V v3 = drawCall.m_To - drawCall.m_RightVector * drawCall.HalfWidth;
 	// TODO: color and other vertex variables customizeble per beam
 	// TODO: decrease visibility of beam based on distance
 	static const rage::Vec3V n(0.0f, 1.0f, 0.0f);
@@ -356,11 +355,11 @@ void LaserBeam::InstallHooks()
 	MH_CreateHook(hook::get_pattern("40 53 48 83 EC 20 8B D9 F6 C1 01 74 18"), DrawScriptWorldStuff_detour, reinterpret_cast<void**>(&DrawScriptWorldStuff_orig));
 }
 
-void LaserBeam::DrawBeam(const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector)
+void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector)
 {
 	if (g_BeamDrawCallCount < g_BeamDrawCalls.size())
 	{
-		g_BeamDrawCalls[g_BeamDrawCallCount] = { from, to, rightVector };
+		g_BeamDrawCalls[g_BeamDrawCallCount] = { width * 0.5f, from, to, rightVector };
 		g_BeamDrawCallCount++;
 	}
 }
