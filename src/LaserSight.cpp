@@ -44,6 +44,14 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{
+		const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
+		const rage::Vec4V color(
+			((info->Color >> 16) & 0xFF) / 255.0f,
+			((info->Color >> 8) & 0xFF) / 255.0f,
+			((info->Color >> 0) & 0xFF) / 255.0f,
+			0.315f
+		);
+
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);
 
@@ -54,7 +62,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 		CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
 
-		CCoronas::Instance()->Draw(startPos, This->m_ComponentInfo->CoronaSize, 0xFFFF0000, This->m_ComponentInfo->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
+		CCoronas::Instance()->Draw(startPos, This->m_ComponentInfo->CoronaSize, info->Color, This->m_ComponentInfo->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
 		
 		if (entity)
 		{
@@ -96,7 +104,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 				{
 					WorldProbe::CShapeTestHit* hit = &results->m_Hits[i];
 
-					LaserBeam::DrawDot(hit->m_Position, hit->m_SurfaceNormal);
+					LaserBeam::DrawDot(hit->m_Position, hit->m_SurfaceNormal, color);
 
 					endPos = hit->m_Position;
 				}
@@ -117,8 +125,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 			CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
 
-			const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
-			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right);
+			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right, color);
 		}
 	}
 }

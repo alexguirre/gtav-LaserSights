@@ -38,10 +38,11 @@ static struct LaserBeamGlobals
 
 struct BeamDrawCall
 {
-	float HalfWidth;
+	float m_HalfWidth;
 	rage::Vec3V m_From;
 	rage::Vec3V m_To;
 	rage::Vec3V m_RightVector;
+	rage::Vec4V m_Color;
 };
 static std::array<BeamDrawCall, 256> g_BeamDrawCalls;
 static int g_BeamDrawCallCount;
@@ -53,6 +54,7 @@ struct DotDrawCall
 {
 	rage::Vec3V m_Position;
 	rage::Vec3V m_Normal;
+	rage::Vec4V m_Color;
 };
 static std::array<DotDrawCall, 256> g_DotDrawCalls;
 static int g_DotDrawCallCount;
@@ -134,14 +136,13 @@ static void SetShaderVars()
 
 static void RenderBeam(const BeamDrawCall& drawCall)
 {
-	const rage::Vec3V v0 = drawCall.m_From + drawCall.m_RightVector * drawCall.HalfWidth;
-	const rage::Vec3V v1 = drawCall.m_From - drawCall.m_RightVector * drawCall.HalfWidth;
-	const rage::Vec3V v2 = drawCall.m_To + drawCall.m_RightVector * drawCall.HalfWidth;
-	const rage::Vec3V v3 = drawCall.m_To - drawCall.m_RightVector * drawCall.HalfWidth;
+	const rage::Vec3V v0 = drawCall.m_From + drawCall.m_RightVector * drawCall.m_HalfWidth;
+	const rage::Vec3V v1 = drawCall.m_From - drawCall.m_RightVector * drawCall.m_HalfWidth;
+	const rage::Vec3V v2 = drawCall.m_To + drawCall.m_RightVector * drawCall.m_HalfWidth;
+	const rage::Vec3V v3 = drawCall.m_To - drawCall.m_RightVector * drawCall.m_HalfWidth;
 	// TODO: color and other vertex variables customizeble per beam
 	// TODO: decrease visibility of beam based on distance
 	static const rage::Vec3V n(0.0f, 1.0f, 0.0f);
-	static const rage::Vec4V color(4.9f, 0.24665f, 0.24665f, 0.3f);
 	static const rage::Vec4V v0TexCoord0(0.0f, 1.0f, 0.0f, 0.0f);
 	static const rage::Vec4V v0TexCoord2(0.015f, 1.0f, 0.0f, 0.0f);
 	static const rage::Vec4V v1TexCoord0(0.0f, -1.0f, 0.0f, 0.0f);
@@ -152,16 +153,15 @@ static void RenderBeam(const BeamDrawCall& drawCall)
 	static const rage::Vec4V v3TexCoord2(0.01528f, -1.0f, 0.0f, 0.0f);
 
 	void* buffer = rage::grcDevice::BeginVertices(rage::grcDrawMode::TriangleStrip, 4, g_LaserBeam.VertexDecls.LaserBeam->m_VertexSize);
-	SetLaserBeamVertex(buffer, 0, v0, n, v0TexCoord0, color, v0TexCoord2);
-	SetLaserBeamVertex(buffer, 1, v1, n, v1TexCoord0, color, v1TexCoord2);
-	SetLaserBeamVertex(buffer, 2, v2, n, v2TexCoord0, color, v2TexCoord2);
-	SetLaserBeamVertex(buffer, 3, v3, n, v3TexCoord0, color, v3TexCoord2);
+	SetLaserBeamVertex(buffer, 0, v0, n, v0TexCoord0, drawCall.m_Color, v0TexCoord2);
+	SetLaserBeamVertex(buffer, 1, v1, n, v1TexCoord0, drawCall.m_Color, v1TexCoord2);
+	SetLaserBeamVertex(buffer, 2, v2, n, v2TexCoord0, drawCall.m_Color, v2TexCoord2);
+	SetLaserBeamVertex(buffer, 3, v3, n, v3TexCoord0, drawCall.m_Color, v3TexCoord2);
 	rage::grcDevice::EndVertices();
 }
 
 static void RenderDot(const DotDrawCall& drawCall)
 {
-	static const rage::Vec4V color(1.0f, 0.0f, 0.0f, 0.2f);
 	static const float v0TexCoord[2] = { 0.0f, 1.0f };
 	static const float v1TexCoord[2] = { 0.0f, 0.0f };
 	static const float v2TexCoord[2] = { 1.0f, 1.0f };
@@ -178,10 +178,10 @@ static void RenderDot(const DotDrawCall& drawCall)
 	rage::Vec3V v3 = drawCall.m_Position + forwardScaled + rightScaled;
 
 	void* buffer = rage::grcDevice::BeginVertices(rage::grcDrawMode::TriangleStrip, 4, g_LaserBeam.VertexDecls.LaserDot->m_VertexSize);
-	SetLaserDotVertex(buffer, 0, v0, color, v0TexCoord, drawCall.m_Normal);
-	SetLaserDotVertex(buffer, 1, v1, color, v1TexCoord, drawCall.m_Normal);
-	SetLaserDotVertex(buffer, 2, v2, color, v2TexCoord, drawCall.m_Normal);
-	SetLaserDotVertex(buffer, 3, v3, color, v3TexCoord, drawCall.m_Normal);
+	SetLaserDotVertex(buffer, 0, v0, drawCall.m_Color, v0TexCoord, drawCall.m_Normal);
+	SetLaserDotVertex(buffer, 1, v1, drawCall.m_Color, v1TexCoord, drawCall.m_Normal);
+	SetLaserDotVertex(buffer, 2, v2, drawCall.m_Color, v2TexCoord, drawCall.m_Normal);
+	SetLaserDotVertex(buffer, 3, v3, drawCall.m_Color, v3TexCoord, drawCall.m_Normal);
 	rage::grcDevice::EndVertices();
 }
 
@@ -355,20 +355,20 @@ void LaserBeam::InstallHooks()
 	MH_CreateHook(hook::get_pattern("40 53 48 83 EC 20 8B D9 F6 C1 01 74 18"), DrawScriptWorldStuff_detour, reinterpret_cast<void**>(&DrawScriptWorldStuff_orig));
 }
 
-void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector)
+void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector, const rage::Vec4V& color)
 {
 	if (g_BeamDrawCallCount < g_BeamDrawCalls.size())
 	{
-		g_BeamDrawCalls[g_BeamDrawCallCount] = { width * 0.5f, from, to, rightVector };
+		g_BeamDrawCalls[g_BeamDrawCallCount] = { width * 0.5f, from, to, rightVector, color };
 		g_BeamDrawCallCount++;
 	}
 }
 
-void LaserBeam::DrawDot(const rage::Vec3V& position, const rage::Vec3V& normal)
+void LaserBeam::DrawDot(const rage::Vec3V& position, const rage::Vec3V& normal, const rage::Vec4V& color)
 {
 	if (g_DotDrawCallCount < g_DotDrawCalls.size())
 	{
-		g_DotDrawCalls[g_DotDrawCallCount] = { position, normal };
+		g_DotDrawCalls[g_DotDrawCallCount] = { position, normal, color };
 		g_DotDrawCallCount++;
 	}
 }

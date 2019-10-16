@@ -18,13 +18,14 @@
 		type, subType, 1, 0xFFFF, 0, nullptr, 0, {}                       \
 	}
 
-#define MEMBER_DATA_FLOAT(fieldName) MEMBER_DATA_SIMPLE(fieldName, rage::parMemberType::Float, 0)
+#define MEMBER_DATA_FLOAT(fieldName) MEMBER_DATA_SIMPLE(fieldName, rage::parMemberType::FLOAT, 0)
+#define MEMBER_DATA_UINT(fieldName) MEMBER_DATA_SIMPLE(fieldName, rage::parMemberType::UINT, 1)
 
 #define MEMBER_DATA_STRUCT(fieldName, subType)                            \
 	static rage::parMemberStructData DATA_NAME(fieldName)                 \
 	{                                                                     \
 		rage::atLiteralStringHash(#fieldName), {}, OFFSET(fieldName), {}, \
-		rage::parMemberType::Struct, subType, 9, 0xFFFF, 0, nullptr,      \
+		rage::parMemberType::STRUCT, subType, 9, 0xFFFF, 0, nullptr,      \
 		nullptr, 0, 0, 0                                                  \
 	}
 
@@ -35,6 +36,7 @@ MEMBER_DATA_STRUCT(LaserSightBone, 0);
 
 // new properties
 MEMBER_DATA_FLOAT(BeamWidth);
+MEMBER_DATA_UINT(Color);
 
 rage::parMemberCommonData* ExtendedWeaponComponentLaserSightInfo::MemberData[NumMembers + 1]
 {
@@ -44,6 +46,7 @@ rage::parMemberCommonData* ExtendedWeaponComponentLaserSightInfo::MemberData[Num
 
 	// new properties
 	DATA_PTR(BeamWidth),
+	DATA_PTR(Color),
 
 	nullptr // null terminator
 };
@@ -56,6 +59,7 @@ uint32_t ExtendedWeaponComponentLaserSightInfo::MemberOffsets[NumMembers]
 
 	// new properties
 	OFFSET(BeamWidth),
+	OFFSET(Color),
 };
 
 static rage::parMemberCommonData** origMemberData;
