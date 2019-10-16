@@ -73,3 +73,12 @@ void* const Addresses::WorldProbe_GetShapeTestManager =
 void* const Addresses::atDataHash = hook::get_pattern("48 83 EC 28 E8 ? ? ? ? 8D 04 C0 8B C8");
 
 void* const Addresses::aiTaskTree_FindTaskByTypeActive = hook::get_pattern("83 79 10 FF 74 20 48 63 41 10");
+
+void* const Addresses::CWeaponComponentLaserSightInfo_parser_Data = hook::get_pattern("D2 D0 6A 4F 00 00 00 00");
+
+// really fragile pattern, for example if size of CWeaponComponentInfo changes, the pattern will break
+void* const Addresses::CWeaponComponentLaserSightInfo_parser_Register =
+	hook::pattern("0F 85 AA 00 00 00 B9 58 00 00 00 E8 ? ? ? ? 4C 8D 0D ? ? ? ? 4C 8D 05 ? ? ? ? 48 8D 15 ? ? ? ? 48 8B C8 48").get(1).get<void>(-0xE);
+
+void* const Addresses::CWeaponComponentLaserSightInfo_parser_Register_SizeOfConstant =
+	reinterpret_cast<char*>(CWeaponComponentLaserSightInfo_parser_Register) + (0xE + 7);

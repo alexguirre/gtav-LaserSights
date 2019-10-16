@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include "LaserBeam.h"
 #include "LaserSight.h"
+#include "ExtendedWeaponComponentLaserSightInfo.h"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <MinHook.h>
@@ -13,6 +14,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 		spdlog::flush_every(std::chrono::seconds(30));
 		spdlog::set_level(spdlog::level::debug);
 		MH_Initialize();
+		ExtendedWeaponComponentLaserSightInfo::InstallHooks();
 		LaserBeam::InstallHooks();
 		LaserSight::InstallHooks();
 		MH_EnableHook(MH_ALL_HOOKS);
