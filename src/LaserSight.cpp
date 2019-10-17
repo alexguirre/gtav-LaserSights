@@ -45,11 +45,16 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{
 		const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
-		const rage::Vec4V color(
+		const rage::Vec3V beamColor(
 			((info->Color >> 16) & 0xFF) / 255.0f,
 			((info->Color >> 8) & 0xFF) / 255.0f,
-			((info->Color >> 0) & 0xFF) / 255.0f,
-			info->Visibility
+			((info->Color >> 0) & 0xFF) / 255.0f
+		);
+		const rage::Vec4V dotColor(
+			beamColor.x,
+			beamColor.y,
+			beamColor.z,
+			info->MaxVisibility * 0.55f
 		);
 
 		rage::Mat34V boneMtx;
@@ -104,7 +109,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 				{
 					WorldProbe::CShapeTestHit* hit = &results->m_Hits[i];
 
-					LaserBeam::DrawDot(hit->m_Position, hit->m_SurfaceNormal, color);
+					LaserBeam::DrawDot(hit->m_Position, hit->m_SurfaceNormal, dotColor);
 
 					endPos = hit->m_Position;
 				}
@@ -124,8 +129,11 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			const rage::Vec3V right = up.Cross(look).Normalized();
 
 			CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
+			
+			const float distance = (endPos - startPos).Length();
+			const float endVisibility = info->MaxVisibility + ((info->MinVisibility - info->MaxVisibility) / Range) * distance;
 
-			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right, color);
+			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right, beamColor, info->MaxVisibility, endVisibility);
 		}
 	}
 }

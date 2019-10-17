@@ -42,7 +42,9 @@ struct BeamDrawCall
 	rage::Vec3V m_From;
 	rage::Vec3V m_To;
 	rage::Vec3V m_RightVector;
-	rage::Vec4V m_Color;
+	rage::Vec3V m_Color;
+	float m_FromVisibility;
+	float m_ToVisibility;
 };
 static std::array<BeamDrawCall, 256> g_BeamDrawCalls;
 static int g_BeamDrawCallCount;
@@ -134,6 +136,12 @@ static void SetShaderVars()
 	g_LaserBeam.Shader->m_Effect->SetVarCommon(g_LaserBeam.Shader, g_LaserBeam.Vars.gCameraDistanceAtMaxDisplacement, &gCameraDistanceAtMaxDisplacement, 4, 1);
 }
 
+static void SetShaderLaserVisibilityMinMax(float min, float max)
+{
+	float values[4] = { min, max, 0.0f, 0.0f };
+	g_LaserBeam.Shader->m_Effect->SetVarCommon(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserVisibilityMinMax, values, 16, 1);
+}
+
 static void RenderBeam(const BeamDrawCall& drawCall)
 {
 	const rage::Vec3V v0 = drawCall.m_From + drawCall.m_RightVector * drawCall.m_HalfWidth;
@@ -152,11 +160,16 @@ static void RenderBeam(const BeamDrawCall& drawCall)
 	static const rage::Vec4V v3TexCoord0(243.5f, -1.0f, 0.0f, 0.0f);
 	static const rage::Vec4V v3TexCoord2(0.01528f, -1.0f, 0.0f, 0.0f);
 
+	const rage::Vec4V colorOrig(drawCall.m_Color.x, drawCall.m_Color.y, drawCall.m_Color.z, drawCall.m_FromVisibility);
+	const rage::Vec4V colorEnd(drawCall.m_Color.x, drawCall.m_Color.y, drawCall.m_Color.z, drawCall.m_ToVisibility);
+
+	SetShaderLaserVisibilityMinMax(drawCall.m_ToVisibility, drawCall.m_FromVisibility);
+
 	void* buffer = rage::grcDevice::BeginVertices(rage::grcDrawMode::TriangleStrip, 4, g_LaserBeam.VertexDecls.LaserBeam->m_VertexSize);
-	SetLaserBeamVertex(buffer, 0, v0, n, v0TexCoord0, drawCall.m_Color, v0TexCoord2);
-	SetLaserBeamVertex(buffer, 1, v1, n, v1TexCoord0, drawCall.m_Color, v1TexCoord2);
-	SetLaserBeamVertex(buffer, 2, v2, n, v2TexCoord0, drawCall.m_Color, v2TexCoord2);
-	SetLaserBeamVertex(buffer, 3, v3, n, v3TexCoord0, drawCall.m_Color, v3TexCoord2);
+	SetLaserBeamVertex(buffer, 0, v0, n, v0TexCoord0, colorOrig, v0TexCoord2);
+	SetLaserBeamVertex(buffer, 1, v1, n, v1TexCoord0, colorOrig, v1TexCoord2);
+	SetLaserBeamVertex(buffer, 2, v2, n, v2TexCoord0, colorEnd, v2TexCoord2);
+	SetLaserBeamVertex(buffer, 3, v3, n, v3TexCoord0, colorEnd, v3TexCoord2);
 	rage::grcDevice::EndVertices();
 }
 
@@ -355,11 +368,11 @@ void LaserBeam::InstallHooks()
 	MH_CreateHook(hook::get_pattern("40 53 48 83 EC 20 8B D9 F6 C1 01 74 18"), DrawScriptWorldStuff_detour, reinterpret_cast<void**>(&DrawScriptWorldStuff_orig));
 }
 
-void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector, const rage::Vec4V& color)
+void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector, const rage::Vec3V& color, float fromVisibility, float toVisibility)
 {
 	if (g_BeamDrawCallCount < g_BeamDrawCalls.size())
 	{
-		g_BeamDrawCalls[g_BeamDrawCallCount] = { width * 0.5f, from, to, rightVector, color };
+		g_BeamDrawCalls[g_BeamDrawCallCount] = { width * 0.5f, from, to, rightVector, color, fromVisibility, toVisibility };
 		g_BeamDrawCallCount++;
 	}
 }
