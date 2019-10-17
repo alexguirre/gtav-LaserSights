@@ -368,7 +368,7 @@ void LaserBeam::DrawDot(const rage::Vec3V& position, const rage::Vec3V& normal, 
 {
 	if (g_DotDrawCallCount < g_DotDrawCalls.size())
 	{
-		g_DotDrawCalls[g_DotDrawCallCount] = { position, normal, color };
+		g_DotDrawCalls[g_DotDrawCallCount] = { position, normal, color * rage::Vec4V(1.0f, 1.0f, 1.0f, 0.667f) };
 		g_DotDrawCallCount++;
 	}
 }

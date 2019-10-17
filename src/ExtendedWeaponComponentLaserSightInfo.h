@@ -12,10 +12,10 @@ class ExtendedWeaponComponentLaserSightInfo : public CWeaponComponentLaserSightI
 public:
 	float BeamWidth;
 	uint32_t Color;
-
+	float Visibility;
 
 public:
-	static constexpr size_t NumMembers{ 5 };
+	static constexpr size_t NumMembers{ 6 };
 
 	static rage::parMemberCommonData* MemberData[NumMembers + 1]; // null terminated array
 	static uint32_t MemberOffsets[NumMembers];

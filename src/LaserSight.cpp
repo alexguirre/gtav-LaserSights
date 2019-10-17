@@ -49,7 +49,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			((info->Color >> 16) & 0xFF) / 255.0f,
 			((info->Color >> 8) & 0xFF) / 255.0f,
 			((info->Color >> 0) & 0xFF) / 255.0f,
-			0.315f
+			info->Visibility
 		);
 
 		rage::Mat34V boneMtx;
