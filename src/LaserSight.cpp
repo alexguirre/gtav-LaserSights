@@ -61,7 +61,10 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		rage::Vec3V startPos = boneMtx.Position();
 		rage::Vec3V endPos = startPos + boneMtx.Forward() * Range;
 
-		CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
+		if (info->DebugLines)
+		{
+			CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
+		}
 
 		CCoronas::Instance()->Draw(startPos, info->CoronaSize, info->CoronaColor, info->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
 		
@@ -95,7 +98,10 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			desc.m_End = endPos;
 			desc.m_84C = 8;
 
-			CScriptIM_DrawLine(startPos, endPos, 0xFF00FF00);
+			if (info->DebugLines)
+			{
+				CScriptIM_DrawLine(startPos, endPos, 0xFF00FF00);
+			}
 
 			WorldProbe::GetShapeTestManager()->SubmitTest(desc, false);
 
@@ -124,8 +130,11 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			const rage::Vec3V& up = (endPos - startPos).Normalized();
 			const rage::Vec3V right = up.Cross(look).Normalized();
 
-			CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
-			
+			if (info->DebugLines)
+			{
+				CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
+			}
+
 			const float distance = (endPos - startPos).Length();
 			const float endVisibility = info->MaxVisibility + ((info->MinVisibility - info->MaxVisibility) / Range) * distance;
 

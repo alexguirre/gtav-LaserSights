@@ -20,6 +20,7 @@
 
 #define MEMBER_DATA_FLOAT(fieldName) MEMBER_DATA_SIMPLE(fieldName, rage::parMemberType::FLOAT, 0)
 #define MEMBER_DATA_UINT(fieldName) MEMBER_DATA_SIMPLE(fieldName, rage::parMemberType::UINT, 1)
+#define MEMBER_DATA_BOOL(fieldName) MEMBER_DATA_SIMPLE(fieldName, rage::parMemberType::BOOL, 0)
 
 #define MEMBER_DATA_STRUCT(fieldName, subType)                            \
 	static rage::parMemberStructData DATA_NAME(fieldName)                 \
@@ -49,6 +50,7 @@ MEMBER_DATA_VEC3V(Color);
 MEMBER_DATA_FLOAT(MinVisibility);
 MEMBER_DATA_FLOAT(MaxVisibility);
 MEMBER_DATA_UINT(CoronaColor);
+MEMBER_DATA_BOOL(DebugLines);
 
 rage::parMemberCommonData* ExtendedWeaponComponentLaserSightInfo::MemberData[NumMembers + 1]
 {
@@ -62,6 +64,7 @@ rage::parMemberCommonData* ExtendedWeaponComponentLaserSightInfo::MemberData[Num
 	DATA_PTR(MinVisibility),
 	DATA_PTR(MaxVisibility),
 	DATA_PTR(CoronaColor),
+	DATA_PTR(DebugLines),
 
 	nullptr // null terminator
 };
@@ -78,6 +81,7 @@ uint32_t ExtendedWeaponComponentLaserSightInfo::MemberOffsets[NumMembers]
 	OFFSET(MinVisibility),
 	OFFSET(MaxVisibility),
 	OFFSET(CoronaColor),
+	OFFSET(DebugLines),
 };
 
 static rage::parMemberCommonData** origMemberData;

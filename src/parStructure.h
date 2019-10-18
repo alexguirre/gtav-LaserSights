@@ -23,6 +23,7 @@ namespace rage
 
 	enum class parMemberType : uint8_t
 	{
+		BOOL = 0,
 		UINT = 6,
 		FLOAT = 7,
 		STRUCT = 12,
