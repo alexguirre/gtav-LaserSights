@@ -14,9 +14,10 @@ public:
 	rage::Vec3V Color;
 	float MinVisibility;
 	float MaxVisibility;
+	uint32_t CoronaColor;
 
 public:
-	static constexpr size_t NumMembers{ 7 };
+	static constexpr size_t NumMembers{ 8 };
 
 	static rage::parMemberCommonData* MemberData[NumMembers + 1]; // null terminated array
 	static uint32_t MemberOffsets[NumMembers];
