@@ -11,7 +11,7 @@ class ExtendedWeaponComponentLaserSightInfo : public CWeaponComponentLaserSightI
 {
 public:
 	float BeamWidth;
-	uint32_t Color;
+	rage::Vec3V Color;
 	float MinVisibility;
 	float MaxVisibility;
 

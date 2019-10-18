@@ -29,6 +29,15 @@
 		nullptr, 0, 0, 0                                                  \
 	}
 
+#define MEMBER_DATA_VECTOR(fieldName, type)                               \
+	static rage::parMemberVectorData DATA_NAME(fieldName)                 \
+	{                                                                     \
+		rage::atLiteralStringHash(#fieldName), {}, OFFSET(fieldName), {}, \
+		type, 0, 1, 0xFFFF, 0, nullptr, { 0.0f, 0.0f, 0.0f, 0.0f }        \
+	}
+
+#define MEMBER_DATA_VEC3V(fieldName) MEMBER_DATA_VECTOR(fieldName, rage::parMemberType::VEC3V)
+
 
 MEMBER_DATA_FLOAT(CoronaSize);
 MEMBER_DATA_FLOAT(CoronaIntensity);
@@ -36,7 +45,7 @@ MEMBER_DATA_STRUCT(LaserSightBone, 0);
 
 // new properties
 MEMBER_DATA_FLOAT(BeamWidth);
-MEMBER_DATA_UINT(Color);
+MEMBER_DATA_VEC3V(Color);
 MEMBER_DATA_FLOAT(MinVisibility);
 MEMBER_DATA_FLOAT(MaxVisibility);
 

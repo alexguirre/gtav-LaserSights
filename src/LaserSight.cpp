@@ -45,11 +45,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{
 		const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
-		const rage::Vec3V beamColor(
-			((info->Color >> 16) & 0xFF) / 255.0f,
-			((info->Color >> 8) & 0xFF) / 255.0f,
-			((info->Color >> 0) & 0xFF) / 255.0f
-		);
+		const rage::Vec3V beamColor(info->Color);
 		const rage::Vec4V dotColor(
 			beamColor.x,
 			beamColor.y,
@@ -67,7 +63,11 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 		CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
 
-		CCoronas::Instance()->Draw(startPos, This->m_ComponentInfo->CoronaSize, info->Color, This->m_ComponentInfo->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
+		const uint32_t coronaColor =
+			(static_cast<uint32_t>(info->Color.x * 255.0f) & 0xFF) << 16 |
+			(static_cast<uint32_t>(info->Color.y * 255.0f) & 0xFF) << 8 |
+			(static_cast<uint32_t>(info->Color.z * 255.0f) & 0xFF) << 0;
+		CCoronas::Instance()->Draw(startPos, This->m_ComponentInfo->CoronaSize, coronaColor, This->m_ComponentInfo->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
 		
 		if (entity)
 		{

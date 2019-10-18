@@ -26,6 +26,7 @@ namespace rage
 		UINT = 6,
 		FLOAT = 7,
 		STRUCT = 12,
+		VEC3V = 20,
 	};
 
 	class parMemberCommonData
@@ -66,4 +67,11 @@ namespace rage
 		uint64_t unk_38;
 	};
 	static_assert(sizeof(parMemberStructData) == 0x40);
+
+	class parMemberVectorData : public parMemberCommonData
+	{
+	public:
+		float m_InitValues[4];
+	};
+	static_assert(sizeof(parMemberVectorData) == 0x30);
 }
