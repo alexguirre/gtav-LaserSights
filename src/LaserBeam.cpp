@@ -126,7 +126,6 @@ static void SetShaderVars()
 {
 	g_LaserBeam.Shader->m_Effect->SetVar(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserSampler, g_LaserBeam.LaserTexture);
 
-	// TODO: shader variables customizeble per beam
 	float LaserVisibilityMinMax[4] = { 0.2f, 100.0f, 0.0f, 0.0f };
 	float gMaxDisplacement = 0.4f;
 	float gCameraDistanceAtMaxDisplacement = 100.0f;
@@ -148,8 +147,7 @@ static void RenderBeam(const BeamDrawCall& drawCall)
 	const rage::Vec3V v1 = drawCall.m_From - drawCall.m_RightVector * drawCall.m_HalfWidth;
 	const rage::Vec3V v2 = drawCall.m_To + drawCall.m_RightVector * drawCall.m_HalfWidth;
 	const rage::Vec3V v3 = drawCall.m_To - drawCall.m_RightVector * drawCall.m_HalfWidth;
-	// TODO: color and other vertex variables customizeble per beam
-	// TODO: decrease visibility of beam based on distance
+
 	static const rage::Vec3V n(0.0f, 1.0f, 0.0f);
 	static const rage::Vec4V v0TexCoord0(0.0f, 1.0f, 0.0f, 0.0f);
 	static const rage::Vec4V v0TexCoord2(0.015f, 1.0f, 0.0f, 0.0f);
