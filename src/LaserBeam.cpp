@@ -122,7 +122,7 @@ static void SetLaserDotVertex(
 	v[15] = normal.z;
 }
 
-static void SetShaderVars()
+static void SetDefaultShaderVars()
 {
 	g_LaserBeam.Shader->m_Effect->SetVar(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserSampler, g_LaserBeam.LaserTexture);
 
@@ -253,7 +253,7 @@ static void Render()
 	if (g_BeamDrawCallCountRender > 0 || g_DotDrawCallCountRender > 0)
 	{
 		rage::grcWorldIdentity();
-		SetShaderVars();
+		SetDefaultShaderVars();
 
 		RenderDots();
 		RenderBeams();
