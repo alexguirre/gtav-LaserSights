@@ -52,6 +52,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			beamColor.z,
 			info->MaxVisibility * 0.55f
 		);
+		const bool isPlayer = entity && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(entity) + 0x10B8)); // TODO: replace hardcoded offset
 
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);
@@ -67,8 +68,8 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		}
 
 		CCoronas::Instance()->Draw(startPos, info->CoronaSize, info->CoronaColor, info->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
-		
-		if (entity)
+
+		if (isPlayer)
 		{
 			constexpr uint32_t CTaskAimGunOnFoot = 4;
 			constexpr uint32_t CTaskAimGunVehicleDriveBy = 295;
