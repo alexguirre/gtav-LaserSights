@@ -20,7 +20,7 @@ static rage::aiTaskTree* GetPedTaskTree(rage::fwEntity* ped)
 {
 	// TODO: get offsets from patterns
 	static const int IntelligenceOffset = 0x10B0;
-	static const int TaskManagerOffset = 0x360;
+	static const int TaskManagerOffset = 0x370; // v1868
 	static const int TaskTreeOffset = 0x0;
 
 	uint8_t* p = reinterpret_cast<uint8_t*>(ped);
