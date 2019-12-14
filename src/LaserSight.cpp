@@ -6,6 +6,7 @@
 #include "Hooking.Helper.h"
 #include "Addresses.h"
 #include "LaserBeam.h"
+#include "ExtendedWeaponComponentLaserSightInfo.h"
 #include "camBaseCamera.h"
 #include "WorldProbe.h"
 #include "CTaskAimGun.h"
@@ -19,7 +20,7 @@ static rage::aiTaskTree* GetPedTaskTree(rage::fwEntity* ped)
 {
 	// TODO: get offsets from patterns
 	static const int IntelligenceOffset = 0x10B0;
-	static const int TaskManagerOffset = 0x360;
+	static const int TaskManagerOffset = 0x370; // v1868
 	static const int TaskTreeOffset = 0x0;
 
 	uint8_t* p = reinterpret_cast<uint8_t*>(ped);
@@ -43,6 +44,16 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{
+		const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
+		const rage::Vec3V beamColor(info->Color);
+		const rage::Vec4V dotColor(
+			beamColor.x,
+			beamColor.y,
+			beamColor.z,
+			info->MaxVisibility * 0.55f
+		);
+		const bool isPlayer = entity && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(entity) + 0x10B8)); // TODO: replace hardcoded offset
+
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);
 
@@ -51,11 +62,14 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		rage::Vec3V startPos = boneMtx.Position();
 		rage::Vec3V endPos = startPos + boneMtx.Forward() * Range;
 
-		CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
+		if (info->DebugLines)
+		{
+			CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
+		}
 
-		CCoronas::Instance()->Draw(startPos, This->m_ComponentInfo->CoronaSize, 0xFFFF0000, This->m_ComponentInfo->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
-		
-		if (entity)
+		CCoronas::Instance()->Draw(startPos, info->CoronaSize, info->CoronaColor, info->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
+
+		if (isPlayer)
 		{
 			constexpr uint32_t CTaskAimGunOnFoot = 4;
 			constexpr uint32_t CTaskAimGunVehicleDriveBy = 295;
@@ -85,7 +99,10 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			desc.m_End = endPos;
 			desc.m_84C = 8;
 
-			CScriptIM_DrawLine(startPos, endPos, 0xFF00FF00);
+			if (info->DebugLines)
+			{
+				CScriptIM_DrawLine(startPos, endPos, 0xFF00FF00);
+			}
 
 			WorldProbe::GetShapeTestManager()->SubmitTest(desc, false);
 
@@ -95,7 +112,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 				{
 					WorldProbe::CShapeTestHit* hit = &results->m_Hits[i];
 
-					LaserBeam::DrawDot(hit->m_Position, hit->m_SurfaceNormal);
+					LaserBeam::DrawDot(hit->m_Position, hit->m_SurfaceNormal, dotColor);
 
 					endPos = hit->m_Position;
 				}
@@ -114,9 +131,15 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			const rage::Vec3V& up = (endPos - startPos).Normalized();
 			const rage::Vec3V right = up.Cross(look).Normalized();
 
-			CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
+			if (info->DebugLines)
+			{
+				CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
+			}
 
-			LaserBeam::DrawBeam(startPos, endPos, right);
+			const float distance = (endPos - startPos).Length();
+			const float endVisibility = info->MaxVisibility + ((info->MinVisibility - info->MaxVisibility) / Range) * distance;
+
+			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right, beamColor, info->MaxVisibility, endVisibility);
 		}
 	}
 }

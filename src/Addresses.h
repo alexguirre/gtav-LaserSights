@@ -33,5 +33,8 @@ public:
 	static void* const WorldProbe_GetShapeTestManager;
 	static void* const atDataHash;
 	static void* const aiTaskTree_FindTaskByTypeActive;
+	static void* const CWeaponComponentLaserSightInfo_parser_Data;
+	static void* const CWeaponComponentLaserSightInfo_parser_Register;
+	static void* const CWeaponComponentLaserSightInfo_parser_Register_SizeOfConstant;
 };
 

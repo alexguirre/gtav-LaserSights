@@ -47,6 +47,7 @@
     <ClCompile Include="aiTask.cpp">
       <Filter>rage</Filter>
     </ClCompile>
+    <ClCompile Include="ExtendedWeaponComponentLaserSightInfo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LaserSight.h" />
@@ -98,6 +99,10 @@
     <ClInclude Include="CTaskAimGun.h">
       <Filter>five</Filter>
     </ClInclude>
+    <ClInclude Include="parStructure.h">
+      <Filter>rage\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="ExtendedWeaponComponentLaserSightInfo.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dependencies">
@@ -117,6 +122,9 @@
     </Filter>
     <Filter Include="dependencies\minhook">
       <UniqueIdentifier>{81ace18d-72bf-4623-8e2b-c8da78d61090}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rage\parser">
+      <UniqueIdentifier>{1149294a-b1c1-47c0-9ef9-9e6ba54a25a8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

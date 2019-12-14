@@ -49,7 +49,7 @@ class CWeaponComponentLaserSight
 {
 public:
 	CWeaponComponentLaserSightInfo* m_ComponentInfo;
-	rage::fwEntity* m_OwnerWeapon;
+	void* m_OwnerWeapon; // actually CWeapon*
 	rage::fwEntity* m_ComponentObject;
 	uint64_t m_20;
 	uint16_t m_28;
