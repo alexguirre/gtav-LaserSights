@@ -65,6 +65,8 @@ void* const Addresses::WorldProbe_CShapeTestResults_AbortTest = hook::get_patter
 
 void* const Addresses::WorldProbe_CShapeTestDesc_SetResultsStructure = hook::get_pattern("48 8B D9 48 89 51 10 48 85 D2 74 34", -0xD);
 
+void* const Addresses::WorldProbe_CShapeTestDesc_SetExcludeEntities = hook::get_absolute_address(hook::get_pattern("E8 ? ? ? ? 38 9D ? ? ? ? C7 85 ? ? ? ? ? ? ? ? 0F 95 C3 ", 1));
+
 void* const Addresses::WorldProbe_CShapeTestManager_SubmitTest = hook::get_pattern("40 55 48 81 EC ? ? ? ? 48 8D 6C 24 ? 48 89 9D ? ? ? ?");
 
 void* const Addresses::WorldProbe_GetShapeTestManager =

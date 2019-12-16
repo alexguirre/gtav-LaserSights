@@ -29,6 +29,7 @@ public:
 	static void* const CurrentCamera;
 	static void* const WorldProbe_CShapeTestResults_AbortTest;
 	static void* const WorldProbe_CShapeTestDesc_SetResultsStructure;
+	static void* const WorldProbe_CShapeTestDesc_SetExcludeEntities;
 	static void* const WorldProbe_CShapeTestManager_SubmitTest;
 	static void* const WorldProbe_GetShapeTestManager;
 	static void* const atDataHash;

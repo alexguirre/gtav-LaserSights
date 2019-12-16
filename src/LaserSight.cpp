@@ -91,6 +91,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 			results->AbortTest();
 			WorldProbe::CShapeTestProbeDesc desc;
+			desc.SetExcludeEntities(&This->m_ComponentObject, 1, 0);
 			desc.SetResultsStructure(results);
 			// TODO: find more appropriate shapetest flags
 			desc.m_Flags1 = 256; // flags copied from game code

@@ -46,6 +46,12 @@ namespace WorldProbe
 		reinterpret_cast<Fn>(Addresses::WorldProbe_CShapeTestDesc_SetResultsStructure)(this, results);
 	}
 
+	void CShapeTestDesc::SetExcludeEntities(const rage::fwEntity* const* entities, int entityCount, uint8_t flags)
+	{
+		using Fn = void(*)(CShapeTestDesc*, const rage::fwEntity* const*, int, uint8_t);
+		reinterpret_cast<Fn>(Addresses::WorldProbe_CShapeTestDesc_SetExcludeEntities)(this, entities, entityCount, flags);
+	}
+
 	CShapeTestProbeDesc::CShapeTestProbeDesc()
 	{
 		m_Type = eShapeTestType::Probe;

@@ -2,6 +2,11 @@
 #include <stdint.h>
 #include "Vector.h"
 
+namespace rage
+{
+	class fwEntity;
+}
+
 namespace WorldProbe
 {
 	class CShapeTestHit
@@ -78,6 +83,7 @@ namespace WorldProbe
 		virtual ~CShapeTestDesc();
 
 		void SetResultsStructure(CShapeTestResults* results);
+		void SetExcludeEntities(const rage::fwEntity* const* entities, int entityCount, uint8_t flags); // actually accepts CEntity
 	};
 	static_assert(sizeof(CShapeTestDesc) == 0x860);
 
