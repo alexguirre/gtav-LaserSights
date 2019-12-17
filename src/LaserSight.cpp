@@ -57,10 +57,8 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);
 
-		const float Range = 100.0f;
-
 		rage::Vec3V startPos = boneMtx.Position();
-		rage::Vec3V endPos = startPos + boneMtx.Forward() * Range;
+		rage::Vec3V endPos = startPos + boneMtx.Forward() * info->BeamRange;
 
 		if (info->DebugLines)
 		{
@@ -138,7 +136,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			}
 
 			const float distance = (endPos - startPos).Length();
-			const float endVisibility = info->MaxVisibility + ((info->MinVisibility - info->MaxVisibility) / Range) * distance;
+			const float endVisibility = info->MaxVisibility + ((info->MinVisibility - info->MaxVisibility) / info->BeamRange) * distance;
 
 			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right, beamColor, info->MaxVisibility, endVisibility);
 		}

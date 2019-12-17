@@ -46,6 +46,7 @@ MEMBER_DATA_STRUCT(LaserSightBone, 0);
 
 // new properties
 MEMBER_DATA_FLOAT(BeamWidth);
+MEMBER_DATA_FLOAT(BeamRange);
 MEMBER_DATA_VEC3V(Color);
 MEMBER_DATA_FLOAT(MinVisibility);
 MEMBER_DATA_FLOAT(MaxVisibility);
@@ -60,6 +61,7 @@ rage::parMemberCommonData* ExtendedWeaponComponentLaserSightInfo::MemberData[Num
 
 	// new properties
 	DATA_PTR(BeamWidth),
+	DATA_PTR(BeamRange),
 	DATA_PTR(Color),
 	DATA_PTR(MinVisibility),
 	DATA_PTR(MaxVisibility),
@@ -77,6 +79,7 @@ uint32_t ExtendedWeaponComponentLaserSightInfo::MemberOffsets[NumMembers]
 
 	// new properties
 	OFFSET(BeamWidth),
+	OFFSET(BeamRange),
 	OFFSET(Color),
 	OFFSET(MinVisibility),
 	OFFSET(MaxVisibility),
