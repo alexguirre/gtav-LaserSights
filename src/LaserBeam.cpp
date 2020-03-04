@@ -1,6 +1,8 @@
 #include "LaserBeam.h"
 #include <array>
 #include <mutex>
+#include <cstddef>
+#include <cstdint>
 #include <Hooking.Patterns.h>
 #include "Hooking.Helper.h"
 #include <spdlog/spdlog.h>
@@ -47,10 +49,10 @@ struct BeamDrawCall
 	float m_ToVisibility;
 };
 static std::array<BeamDrawCall, 256> g_BeamDrawCalls;
-static int g_BeamDrawCallCount;
+static size_t g_BeamDrawCallCount;
 // copy of the draw calls to be used in the render thread
 static std::array<BeamDrawCall, 256> g_BeamDrawCallsRender;
-static int g_BeamDrawCallCountRender;
+static size_t g_BeamDrawCallCountRender;
 
 struct DotDrawCall
 {
@@ -59,16 +61,19 @@ struct DotDrawCall
 	rage::Vec4V m_Color;
 };
 static std::array<DotDrawCall, 256> g_DotDrawCalls;
-static int g_DotDrawCallCount;
+static size_t g_DotDrawCallCount;
 // copy of the draw calls to be used in the render thread
 static std::array<DotDrawCall, 256> g_DotDrawCallsRender;
-static int g_DotDrawCallCountRender;
+static size_t g_DotDrawCallCountRender;
 
 static rage::grcTexture* GetTextureFromGraphicsTxd(uint32_t nameHash)
 {
 	using Fn = rage::grcTexture* (*)(uint32_t);
 	return reinterpret_cast<Fn>(Addresses::GetTextureFromGraphicsTxd)(nameHash);
 }
+
+static void SetBackBufferRT() { reinterpret_cast<void(*)()>(Addresses::SetBackBufferRT)(); }
+static void UnSetBackBufferRT() { reinterpret_cast<void(*)(uint8_t)>(Addresses::UnSetBackBufferRT)(0); }
 
 static void SetLaserBeamVertex(
 	void* buffer, int index,
@@ -252,11 +257,16 @@ static void Render()
 
 	if (g_BeamDrawCallCountRender > 0 || g_DotDrawCallCountRender > 0)
 	{
+		// needed to change to a depth buffer that does not have the flag D3D11_DSV_READ_ONLY_DEPTH
+		SetBackBufferRT();
+
 		rage::grcWorldIdentity();
 		SetDefaultShaderVars();
 
 		RenderDots();
 		RenderBeams();
+
+		UnSetBackBufferRT();
 	}
 }
 
@@ -331,10 +341,11 @@ static void AddDrawCommandCallback(void(*cb)())
 	reinterpret_cast<Fn>(Addresses::AddDrawCommandCallback)(cb);
 }
 
-static void(*DrawScriptWorldStuff_orig)(uint8_t n);
-static void DrawScriptWorldStuff_detour(uint8_t n)
+// last draw function from CRenderPhaseDrawScene::Draw
+static void(*sub_1627E4_orig)(float v);
+static void sub_1627E4_detour(float v)
 {
-	DrawScriptWorldStuff_orig(n);
+	sub_1627E4_orig(v);
 
 	// copy the draw calls to the render thread array
 	memmove_s(g_BeamDrawCallsRender.data(), g_BeamDrawCallsRender.size() * sizeof(BeamDrawCall),
@@ -352,7 +363,7 @@ static void DrawScriptWorldStuff_detour(uint8_t n)
 
 void LaserBeam::InstallHooks()
 {
-	void* gtaRenderThreadGameInterface = 
+	void* gtaRenderThreadGameInterface =
 		hook::get_absolute_address(
 			hook::get_absolute_address<char>(hook::get_pattern("E8 ? ? ? ? E8 ? ? ? ? E8 ? ? ? ? 48 8B 5C 24 ? 48 83 C4 20 5F E9 ? ? ? ?", 11)) + 3
 		);
@@ -360,10 +371,11 @@ void LaserBeam::InstallHooks()
 
 	CGtaRenderThreadGameInterface_RenderThreadInit_orig =
 		reinterpret_cast<decltype(CGtaRenderThreadGameInterface_RenderThreadInit_orig)>(gtaRenderThreadGameInterfaceVTable[5]);
-	
+
 	gtaRenderThreadGameInterfaceVTable[5] = CGtaRenderThreadGameInterface_RenderThreadInit_detour;
 
-	MH_CreateHook(hook::get_pattern("40 53 48 83 EC 20 8B D9 F6 C1 01 74 18"), DrawScriptWorldStuff_detour, reinterpret_cast<void**>(&DrawScriptWorldStuff_orig));
+	auto a = hook::get_pattern<char>("E8 ? ? ? ? E8 ? ? ? ? 33 D2 8D 4A 28 E8 ? ? ? ? 48 85 C0", 6);
+	MH_CreateHook(a + *(int*)a + 4, sub_1627E4_detour, reinterpret_cast<void**>(&sub_1627E4_orig));
 }
 
 void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector, const rage::Vec3V& color, float fromVisibility, float toVisibility)

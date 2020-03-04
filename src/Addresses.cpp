@@ -84,3 +84,7 @@ void* const Addresses::CWeaponComponentLaserSightInfo_parser_Register =
 
 void* const Addresses::CWeaponComponentLaserSightInfo_parser_Register_SizeOfConstant =
 	reinterpret_cast<char*>(CWeaponComponentLaserSightInfo_parser_Register) + (0xE + 7);
+
+void* const Addresses::SetBackBufferRT = hook::get_pattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 40 48 8B 35 ? ? ? ?");
+
+void* const Addresses::UnSetBackBufferRT = hook::get_pattern("48 83 EC 48 33 C0 88 4C 24 37 48 8B 0D ? ? ? ? C7 44 24 ? ? ? ? ?");

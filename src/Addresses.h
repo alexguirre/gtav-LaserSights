@@ -37,5 +37,7 @@ public:
 	static void* const CWeaponComponentLaserSightInfo_parser_Data;
 	static void* const CWeaponComponentLaserSightInfo_parser_Register;
 	static void* const CWeaponComponentLaserSightInfo_parser_Register_SizeOfConstant;
+	static void* const SetBackBufferRT;
+	static void* const UnSetBackBufferRT;
 };
 
