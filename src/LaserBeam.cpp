@@ -17,60 +17,38 @@
 
 static struct LaserBeamGlobals
 {
-	rage::grmShader* Shader = nullptr;
+	rage::grmShader* Shader{ nullptr };
 	struct
 	{
-		rage::grcEffectTechnique__ LaserBeam;
-		rage::grcEffectTechnique__ LaserDot;
-	} Techniques;
+		rage::grcEffectTechnique__ LaserBeam{ 0 };
+	} Techniques{};
 	struct
 	{
-		rage::grcEffectVar__ LaserSampler;
-		rage::grcEffectVar__ gMaxDisplacement;
-		rage::grcEffectVar__ gCameraDistanceAtMaxDisplacement;
-		rage::grcEffectVar__ LaserVisibilityMinMax;
-	} Vars;
+		rage::grcEffectVar__ gMaxDisplacement{ 0 };
+		rage::grcEffectVar__ gCameraDistanceAtMaxDisplacement{ 0 };
+		rage::grcEffectVar__ LaserVisibilityMinMax{ 0 };
+	} Vars{};
 	struct
 	{
-		rage::grcVertexDeclaration* LaserBeam;
-		rage::grcVertexDeclaration* LaserDot;
-	} VertexDecls;
-	rage::grcTexture* LaserTexture = nullptr;
+		rage::grcVertexDeclaration* LaserBeam{ nullptr };
+	} VertexDecls{};
 } g_LaserBeam;
 
 struct BeamDrawCall
 {
-	float m_HalfWidth;
+	float m_HalfWidth{ 0.0f };
 	rage::Vec3V m_From;
 	rage::Vec3V m_To;
 	rage::Vec3V m_RightVector;
 	rage::Vec3V m_Color;
-	float m_FromVisibility;
-	float m_ToVisibility;
+	float m_FromVisibility{ 0.0f };
+	float m_ToVisibility{ 0.0f };
 };
 static std::array<BeamDrawCall, 256> g_BeamDrawCalls;
 static size_t g_BeamDrawCallCount;
 // copy of the draw calls to be used in the render thread
 static std::array<BeamDrawCall, 256> g_BeamDrawCallsRender;
 static size_t g_BeamDrawCallCountRender;
-
-struct DotDrawCall
-{
-	rage::Vec3V m_Position;
-	rage::Vec3V m_Normal;
-	rage::Vec4V m_Color;
-};
-static std::array<DotDrawCall, 256> g_DotDrawCalls;
-static size_t g_DotDrawCallCount;
-// copy of the draw calls to be used in the render thread
-static std::array<DotDrawCall, 256> g_DotDrawCallsRender;
-static size_t g_DotDrawCallCountRender;
-
-static rage::grcTexture* GetTextureFromGraphicsTxd(uint32_t nameHash)
-{
-	using Fn = rage::grcTexture* (*)(uint32_t);
-	return reinterpret_cast<Fn>(Addresses::GetTextureFromGraphicsTxd)(nameHash);
-}
 
 static void SetBackBufferRT() { reinterpret_cast<void(*)()>(Addresses::SetBackBufferRT)(); }
 static void UnSetBackBufferRT() { reinterpret_cast<void(*)(uint8_t)>(Addresses::UnSetBackBufferRT)(0); }
@@ -101,36 +79,8 @@ static void SetLaserBeamVertex(
 	v[17] = texCoord2.w;
 }
 
-static void SetLaserDotVertex(
-	void* buffer, int index,
-	const rage::Vec3V& position,
-	const rage::Vec4V& color,
-	const float texCoord0[2],
-	const rage::Vec3V& normal)
-{
-	float* v = reinterpret_cast<float*>(reinterpret_cast<char*>(buffer) + g_LaserBeam.VertexDecls.LaserDot->m_VertexSize * index);
-	v[0] = position.x;
-	v[1] = position.y;
-	v[2] = position.z;
-	v[3] = color.x;
-	v[4] = color.y;
-	v[5] = color.z;
-	v[6] = color.w;
-	v[7] = texCoord0[0];
-	v[8] = texCoord0[1];
-	v[9] = 0.0f;
-	v[10] = 0.0f;
-	v[11] = 0.0f;
-	v[12] = 0.0f;
-	v[13] = normal.x;
-	v[14] = normal.y;
-	v[15] = normal.z;
-}
-
 static void SetDefaultShaderVars()
 {
-	g_LaserBeam.Shader->m_Effect->SetVar(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserSampler, g_LaserBeam.LaserTexture);
-
 	float LaserVisibilityMinMax[4] = { 0.2f, 100.0f, 0.0f, 0.0f };
 	float gMaxDisplacement = 0.4f;
 	float gCameraDistanceAtMaxDisplacement = 100.0f;
@@ -176,31 +126,6 @@ static void RenderBeam(const BeamDrawCall& drawCall)
 	rage::grcDevice::EndVertices();
 }
 
-static void RenderDot(const DotDrawCall& drawCall)
-{
-	static const float v0TexCoord[2] = { 0.0f, 1.0f };
-	static const float v1TexCoord[2] = { 0.0f, 0.0f };
-	static const float v2TexCoord[2] = { 1.0f, 1.0f };
-	static const float v3TexCoord[2] = { 1.0f, 0.0f };
-
-	constexpr float dotScale = 0.1f;
-	rage::Mat34V mtx = rage::Mat34V::FromNormal(drawCall.m_Normal);
-	rage::Vec3V forwardScaled = mtx.Forward() * dotScale;
-	rage::Vec3V rightScaled = mtx.Right() * dotScale;
-
-	rage::Vec3V v0 = drawCall.m_Position - forwardScaled - rightScaled;
-	rage::Vec3V v1 = drawCall.m_Position + forwardScaled - rightScaled;
-	rage::Vec3V v2 = drawCall.m_Position - forwardScaled + rightScaled;
-	rage::Vec3V v3 = drawCall.m_Position + forwardScaled + rightScaled;
-
-	void* buffer = rage::grcDevice::BeginVertices(rage::grcDrawMode::TriangleStrip, 4, g_LaserBeam.VertexDecls.LaserDot->m_VertexSize);
-	SetLaserDotVertex(buffer, 0, v0, drawCall.m_Color, v0TexCoord, drawCall.m_Normal);
-	SetLaserDotVertex(buffer, 1, v1, drawCall.m_Color, v1TexCoord, drawCall.m_Normal);
-	SetLaserDotVertex(buffer, 2, v2, drawCall.m_Color, v2TexCoord, drawCall.m_Normal);
-	SetLaserDotVertex(buffer, 3, v3, drawCall.m_Color, v3TexCoord, drawCall.m_Normal);
-	rage::grcDevice::EndVertices();
-}
-
 static void RenderBeams()
 {
 	if (g_BeamDrawCallCountRender > 0)
@@ -224,38 +149,9 @@ static void RenderBeams()
 	}
 }
 
-static void RenderDots()
-{
-	if (g_DotDrawCallCountRender > 0)
-	{
-		if (g_LaserBeam.Shader->BeginDraw(static_cast<rage::grmShader::eDrawType>(0), true, g_LaserBeam.Techniques.LaserDot))
-		{
-			g_LaserBeam.Shader->BeginPass(0);
-
-			rage::grcDevice::SetVertexDeclaration(g_LaserBeam.VertexDecls.LaserDot);
-
-			for (int i = 0; i < g_DotDrawCallCountRender; i++)
-			{
-				RenderDot(g_DotDrawCallsRender[i]);
-			}
-
-			g_LaserBeam.Shader->EndPass();
-			g_LaserBeam.Shader->EndDraw();
-		}
-
-		g_DotDrawCallCountRender = 0;
-	}
-}
-
 static void Render()
 {
-	if (!g_LaserBeam.LaserTexture)
-	{
-		g_LaserBeam.LaserTexture = GetTextureFromGraphicsTxd(2716504251/*laser*/);
-		spdlog::debug("LaserTexture:{}", reinterpret_cast<void*>(g_LaserBeam.LaserTexture));
-	}
-
-	if (g_BeamDrawCallCountRender > 0 || g_DotDrawCallCountRender > 0)
+	if (g_BeamDrawCallCountRender > 0)
 	{
 		// needed to change to a depth buffer that does not have the flag D3D11_DSV_READ_ONLY_DEPTH
 		SetBackBufferRT();
@@ -263,7 +159,6 @@ static void Render()
 		rage::grcWorldIdentity();
 		SetDefaultShaderVars();
 
-		RenderDots();
 		RenderBeams();
 
 		UnSetBackBufferRT();
@@ -289,20 +184,16 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 
 	// lookup techniques
 	g_LaserBeam.Techniques.LaserBeam = effect->LookupTechnique("LaserBeam");
-	g_LaserBeam.Techniques.LaserDot = effect->LookupTechnique("LaserDot");
 
 	spdlog::debug("Techniques:");
 	spdlog::debug("  LaserBeam:{}", g_LaserBeam.Techniques.LaserBeam);
-	spdlog::debug("  LaserDot:{}", g_LaserBeam.Techniques.LaserDot);
 
 	// lookup vars
-	g_LaserBeam.Vars.LaserSampler = effect->LookupVar("LaserSampler");
 	g_LaserBeam.Vars.gMaxDisplacement = effect->LookupVar("gMaxDisplacement");
 	g_LaserBeam.Vars.gCameraDistanceAtMaxDisplacement = effect->LookupVar("gCameraDistanceAtMaxDisplacement");
 	g_LaserBeam.Vars.LaserVisibilityMinMax = effect->LookupVar("LaserVisibilityMinMax");
 
 	spdlog::debug("Vars:");
-	spdlog::debug("  LaserSampler:{}", g_LaserBeam.Vars.LaserSampler);
 	spdlog::debug("  gMaxDisplacement:{}", g_LaserBeam.Vars.gMaxDisplacement);
 	spdlog::debug("  gCameraDistanceAtMaxDisplacement:{}", g_LaserBeam.Vars.gCameraDistanceAtMaxDisplacement);
 	spdlog::debug("  LaserVisibilityMinMax:{}", g_LaserBeam.Vars.LaserVisibilityMinMax);
@@ -319,20 +210,8 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 	};
 	g_LaserBeam.VertexDecls.LaserBeam = rage::grcDevice::CreateVertexDeclaration(laserBeamVertexElements, ARRAYSIZE(laserBeamVertexElements));
 
-	const rage::grcVertexElement laserDotVertexElements[] =
-	{
-		{ 0, rage::grcVertexElement::SemanticName::POSITION, 0, 12, rage::grcVertexElement::Format::R32G32B32_FLOAT, 0, 0 },
-		{ 0, rage::grcVertexElement::SemanticName::COLOR,    0, 16, rage::grcVertexElement::Format::R32G32B32A32_FLOAT,  0, 0 },
-		{ 0, rage::grcVertexElement::SemanticName::TEXCOORD, 0, 8,  rage::grcVertexElement::Format::R32G32_FLOAT,    0, 0 },
-		{ 0, rage::grcVertexElement::SemanticName::TEXCOORD, 1, 8,  rage::grcVertexElement::Format::R32G32_FLOAT,    0, 0 },
-		{ 0, rage::grcVertexElement::SemanticName::TEXCOORD, 2, 8,  rage::grcVertexElement::Format::R32G32_FLOAT,    0, 0 },
-		{ 0, rage::grcVertexElement::SemanticName::NORMAL,   0, 12, rage::grcVertexElement::Format::R32G32B32_FLOAT, 0, 0 },
-	};
-	g_LaserBeam.VertexDecls.LaserDot = rage::grcDevice::CreateVertexDeclaration(laserDotVertexElements, ARRAYSIZE(laserDotVertexElements));
-
 	spdlog::debug("Vertex Declarations:");
 	spdlog::debug("  LaserBeam:{}", reinterpret_cast<void*>(g_LaserBeam.VertexDecls.LaserBeam));
-	spdlog::debug("  LaserDot:{}", reinterpret_cast<void*>(g_LaserBeam.VertexDecls.LaserDot));
 }
 
 static void AddDrawCommandCallback(void(*cb)())
@@ -352,11 +231,6 @@ static void sub_1627E4_detour(float v)
 		g_BeamDrawCalls.data(), g_BeamDrawCallCount * sizeof(BeamDrawCall));
 	g_BeamDrawCallCountRender = g_BeamDrawCallCount;
 	g_BeamDrawCallCount = 0;
-
-	memmove_s(g_DotDrawCallsRender.data(), g_DotDrawCallsRender.size() * sizeof(DotDrawCall),
-		g_DotDrawCalls.data(), g_DotDrawCallCount * sizeof(DotDrawCall));
-	g_DotDrawCallCountRender = g_DotDrawCallCount;
-	g_DotDrawCallCount = 0;
 
 	AddDrawCommandCallback(Render);
 }
@@ -384,14 +258,5 @@ void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V
 	{
 		g_BeamDrawCalls[g_BeamDrawCallCount] = { width * 0.5f, from, to, rightVector, color, fromVisibility, toVisibility };
 		g_BeamDrawCallCount++;
-	}
-}
-
-void LaserBeam::DrawDot(const rage::Vec3V& position, const rage::Vec3V& normal, const rage::Vec4V& color)
-{
-	if (g_DotDrawCallCount < g_DotDrawCalls.size())
-	{
-		g_DotDrawCalls[g_DotDrawCallCount] = { position, normal, color * rage::Vec4V(1.0f, 1.0f, 1.0f, 0.667f) };
-		g_DotDrawCallCount++;
 	}
 }

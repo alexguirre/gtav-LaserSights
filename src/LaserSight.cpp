@@ -111,9 +111,9 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 				{
 					WorldProbe::CShapeTestHit* hit = &results->m_Hits[i];
 
-					LaserBeam::DrawDot(hit->m_Position, hit->m_SurfaceNormal, dotColor);
-
 					endPos = hit->m_Position;
+
+					CCoronas::Instance()->Draw(hit->m_Position, info->CoronaSize * 0.25f, info->CoronaColor, info->CoronaIntensity * 1.25f, 100.0f, hit->m_SurfaceNormal, 1.0f, 65.0f, 85.0f, 3);
 				}
 
 				results->AbortTest();
