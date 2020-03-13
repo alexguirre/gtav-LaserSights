@@ -24,8 +24,6 @@ static struct LaserBeamGlobals
 	} Techniques{};
 	struct
 	{
-		rage::grcEffectVar__ gMaxDisplacement{ 0 };
-		rage::grcEffectVar__ gCameraDistanceAtMaxDisplacement{ 0 };
 		rage::grcEffectVar__ LaserVisibilityMinMax{ 0 };
 	} Vars{};
 	struct
@@ -79,21 +77,15 @@ static void SetLaserBeamVertex(
 	v[17] = texCoord2.w;
 }
 
-static void SetDefaultShaderVars()
-{
-	float LaserVisibilityMinMax[4] = { 0.2f, 100.0f, 0.0f, 0.0f };
-	float gMaxDisplacement = 0.4f;
-	float gCameraDistanceAtMaxDisplacement = 100.0f;
-
-	g_LaserBeam.Shader->m_Effect->SetVarCommon(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserVisibilityMinMax, LaserVisibilityMinMax, 16, 1);
-	g_LaserBeam.Shader->m_Effect->SetVarCommon(g_LaserBeam.Shader, g_LaserBeam.Vars.gMaxDisplacement, &gMaxDisplacement, 4, 1);
-	g_LaserBeam.Shader->m_Effect->SetVarCommon(g_LaserBeam.Shader, g_LaserBeam.Vars.gCameraDistanceAtMaxDisplacement, &gCameraDistanceAtMaxDisplacement, 4, 1);
-}
-
 static void SetShaderLaserVisibilityMinMax(float min, float max)
 {
-	float values[4] = { min, max, 0.0f, 0.0f };
-	g_LaserBeam.Shader->m_Effect->SetVarCommon(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserVisibilityMinMax, values, 16, 1);
+	float values[2] = { min, max };
+	g_LaserBeam.Shader->m_Effect->SetVarCommon(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserVisibilityMinMax, values, 8, 1);
+}
+
+static void SetDefaultShaderVars()
+{
+	SetShaderLaserVisibilityMinMax(0.2f, 100.0f);
 }
 
 static void RenderBeam(const BeamDrawCall& drawCall)
@@ -189,13 +181,9 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 	spdlog::debug("  LaserBeam:{}", g_LaserBeam.Techniques.LaserBeam);
 
 	// lookup vars
-	g_LaserBeam.Vars.gMaxDisplacement = effect->LookupVar("gMaxDisplacement");
-	g_LaserBeam.Vars.gCameraDistanceAtMaxDisplacement = effect->LookupVar("gCameraDistanceAtMaxDisplacement");
 	g_LaserBeam.Vars.LaserVisibilityMinMax = effect->LookupVar("LaserVisibilityMinMax");
 
 	spdlog::debug("Vars:");
-	spdlog::debug("  gMaxDisplacement:{}", g_LaserBeam.Vars.gMaxDisplacement);
-	spdlog::debug("  gCameraDistanceAtMaxDisplacement:{}", g_LaserBeam.Vars.gCameraDistanceAtMaxDisplacement);
 	spdlog::debug("  LaserVisibilityMinMax:{}", g_LaserBeam.Vars.LaserVisibilityMinMax);
 
 	// create vertex declarations
