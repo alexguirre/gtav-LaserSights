@@ -61,7 +61,11 @@ public:
 	uint8_t padding_3C[0x4];
 	WorldProbe::CShapeTestResults* m_RaycastResult;
 	rage::Vec3V* m_RaycastHitPosition;
-	bool m_HasRaycastHit;
+	union
+	{
+		bool m_HasRaycastHit;
+		bool m_IsOff; // re-use field above to store whether the laser is toggled
+	};
 	uint8_t padding_51[0x7];
 
 	virtual bool GetIsClassId(uint32_t classId) = 0;

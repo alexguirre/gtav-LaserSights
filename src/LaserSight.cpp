@@ -31,16 +31,36 @@ static rage::aiTaskTree* GetPedTaskTree(rage::fwEntity* ped)
 	return taskTree;
 }
 
+static bool IsContextPressed()
+{
+	class CControl;
+	class ioValue;
+	constexpr int INPUT_CONTEXT{ 51 };
+
+	CControl* const c = ((CControl * (*)(bool))Addresses::CControlMgr_GetDefaultControl)(true);
+	ioValue* const v = ((ioValue * (*)(CControl*, int))Addresses::CControlMgr_GetIoValue)(c, INPUT_CONTEXT);
+
+	constexpr struct ioValue_ReadOptions { float f1; uint32_t f2; } Options{ 0.0f, 1 };
+	constexpr float Threshold{ 0.5f };
+	return ((bool(*)(ioValue*, float, const ioValue_ReadOptions&))Addresses::ioValue_IsPressed)(v, Threshold, Options);
+}
+
 static void(*CWeaponComponentLaserSight_Process_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
 static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight* This, rage::fwEntity* entity)
 {
-	CWeaponComponentLaserSight_Process_orig(This, entity);
+	if (IsContextPressed())
+	{
+		This->m_IsOff = !This->m_IsOff;
+	}
 }
 
 static void(*CWeaponComponentLaserSight_ProcessPostPreRender_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
 static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponComponentLaserSight* This, rage::fwEntity* entity)
 {
-	CWeaponComponentLaserSight_ProcessPostPreRender_orig(This, entity);
+	if (This->m_IsOff)
+	{
+		return;
+	}
 
 	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{

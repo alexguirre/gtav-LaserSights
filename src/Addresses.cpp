@@ -88,3 +88,9 @@ void* const Addresses::CWeaponComponentLaserSightInfo_parser_Register_SizeOfCons
 void* const Addresses::SetBackBufferRT = hook::get_pattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 40 48 8B 35 ? ? ? ?");
 
 void* const Addresses::UnSetBackBufferRT = hook::get_pattern("48 83 EC 48 33 C0 88 4C 24 37 48 8B 0D ? ? ? ? C7 44 24 ? ? ? ? ?");
+
+void* const Addresses::CControlMgr_GetDefaultControl = hook::get_pattern("E8 ? ? ? ? 80 3D ? ? ? ? ? 48 8B D8 75 5A 80 3D ? ? ? ? ? 75 51 48 8D 0D ? ? ? ?", -0xD);
+
+void* const Addresses::CControlMgr_GetIoValue = hook::get_pattern("8D 82 ? ? ? ? 4C 8B C9 83 F8 1A 77 7F");
+
+void* const Addresses::ioValue_IsPressed = hook::get_pattern("0F 29 74 24 ? 49 8B F8 48 8B F1 0F 28 F1 E8 ? ? ? ? 33 DB 84 C0 74 17", -0xF);
