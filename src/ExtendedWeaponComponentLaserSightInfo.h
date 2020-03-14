@@ -16,10 +16,11 @@ public:
 	float MinVisibility;
 	float MaxVisibility;
 	uint32_t CoronaColor;
+	bool IR;
 	bool DebugLines;
 
 public:
-	static constexpr size_t NumMembers{ 10 };
+	static constexpr size_t NumMembers{ 11 };
 
 	static rage::parMemberCommonData* MemberData[NumMembers + 1]; // null terminated array
 	static uint32_t MemberOffsets[NumMembers];

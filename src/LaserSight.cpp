@@ -45,6 +45,11 @@ static bool IsContextPressed()
 	return ((bool(*)(ioValue*, float, const ioValue_ReadOptions&))Addresses::ioValue_IsPressed)(v, Threshold, Options);
 }
 
+static bool IsNightVisionEnabled()
+{
+	return *reinterpret_cast<bool*>(Addresses::IsNightVisionEnabled);
+}
+
 static void(*CWeaponComponentLaserSight_Process_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
 static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight* This, rage::fwEntity* entity)
 {
@@ -62,9 +67,15 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		return;
 	}
 
+	const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
+
+	if (info->IR && !IsNightVisionEnabled())
+	{
+		return;
+	}
+
 	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{
-		const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
 		const rage::Vec3V beamColor(info->Color);
 		const rage::Vec4V dotColor(
 			beamColor.x,

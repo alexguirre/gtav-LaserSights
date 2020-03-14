@@ -90,3 +90,5 @@ void* const Addresses::CControlMgr_GetDefaultControl = hook::get_pattern("E8 ? ?
 void* const Addresses::CControlMgr_GetIoValue = hook::get_pattern("8D 82 ? ? ? ? 4C 8B C9 83 F8 1A 77 7F");
 
 void* const Addresses::ioValue_IsPressed = hook::get_pattern("0F 29 74 24 ? 49 8B F8 48 8B F1 0F 28 F1 E8 ? ? ? ? 33 DB 84 C0 74 17", -0xF);
+
+void* const Addresses::IsNightVisionEnabled = hook::get_absolute_address(hook::get_pattern("44 88 35 ? ? ? ? 44 88 35 ? ? ? ? 44 89 35 ? ? ? ? 41 84 C7", 3));

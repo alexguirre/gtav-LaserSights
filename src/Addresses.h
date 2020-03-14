@@ -40,5 +40,6 @@ public:
 	static void* const CControlMgr_GetDefaultControl;
 	static void* const CControlMgr_GetIoValue;
 	static void* const ioValue_IsPressed;
+	static void* const IsNightVisionEnabled;
 };
 
