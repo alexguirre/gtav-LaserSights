@@ -48,9 +48,6 @@ static size_t g_BeamDrawCallCount;
 static std::array<BeamDrawCall, 256> g_BeamDrawCallsRender;
 static size_t g_BeamDrawCallCountRender;
 
-static void SetBackBufferRT() { reinterpret_cast<void(*)()>(Addresses::SetBackBufferRT)(); }
-static void UnSetBackBufferRT() { reinterpret_cast<void(*)(uint8_t)>(Addresses::UnSetBackBufferRT)(0); }
-
 static void SetLaserBeamVertex(
 	void* buffer, int index,
 	const rage::Vec3V& position, const rage::Vec3V& normal,
@@ -145,15 +142,10 @@ static void Render()
 {
 	if (g_BeamDrawCallCountRender > 0)
 	{
-		// needed to change to a depth buffer that does not have the flag D3D11_DSV_READ_ONLY_DEPTH
-		SetBackBufferRT();
-
 		rage::grcWorldIdentity();
 		SetDefaultShaderVars();
 
 		RenderBeams();
-
-		UnSetBackBufferRT();
 	}
 }
 
@@ -208,12 +200,9 @@ static void AddDrawCommandCallback(void(*cb)())
 	reinterpret_cast<Fn>(Addresses::AddDrawCommandCallback)(cb);
 }
 
-// last draw function from CRenderPhaseDrawScene::Draw
-static void(*sub_1627E4_orig)(float v);
-static void sub_1627E4_detour(float v)
+static void(*sub_D63908_orig)(uint64_t a1);
+static void sub_D63908_detour(uint64_t a1)
 {
-	sub_1627E4_orig(v);
-
 	// copy the draw calls to the render thread array
 	memmove_s(g_BeamDrawCallsRender.data(), g_BeamDrawCallsRender.size() * sizeof(BeamDrawCall),
 		g_BeamDrawCalls.data(), g_BeamDrawCallCount * sizeof(BeamDrawCall));
@@ -221,6 +210,8 @@ static void sub_1627E4_detour(float v)
 	g_BeamDrawCallCount = 0;
 
 	AddDrawCommandCallback(Render);
+
+	return sub_D63908_orig(a1);
 }
 
 void LaserBeam::InstallHooks()
@@ -236,8 +227,8 @@ void LaserBeam::InstallHooks()
 
 	gtaRenderThreadGameInterfaceVTable[5] = CGtaRenderThreadGameInterface_RenderThreadInit_detour;
 
-	auto a = hook::get_pattern<char>("E8 ? ? ? ? E8 ? ? ? ? 33 D2 8D 4A 28 E8 ? ? ? ? 48 85 C0", 6);
-	MH_CreateHook(a + *(int*)a + 4, sub_1627E4_detour, reinterpret_cast<void**>(&sub_1627E4_orig));
+	MH_CreateHook(hook::get_pattern("40 53 48 83 EC 20 8B D9 F6 C1 01 0F 84 ? ? ? ? E8 ? ? ? ? F6 80 ? ? ? ? ?"),
+		sub_D63908_detour, reinterpret_cast<void**>(&sub_D63908_orig));
 }
 
 void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector, const rage::Vec3V& color, float fromVisibility, float toVisibility)
