@@ -8,7 +8,6 @@
 #include <spdlog/spdlog.h>
 #include "grmShaderFactory.h"
 #include "fiAssetManager.h"
-#include "grcTexture.h"
 #include "grcDevice.h"
 #include "Addresses.h"
 #include <MinHook.h>
