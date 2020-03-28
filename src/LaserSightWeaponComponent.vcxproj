@@ -124,7 +124,6 @@
     <ClInclude Include="fiAssetManager.h" />
     <ClInclude Include="fwEntity.h" />
     <ClInclude Include="grcDevice.h" />
-    <ClInclude Include="grcTexture.h" />
     <ClInclude Include="grmShaderFactory.h" />
     <ClInclude Include="Hashing.h" />
     <ClInclude Include="Hooking.Helper.h" />

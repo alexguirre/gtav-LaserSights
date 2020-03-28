@@ -1,11 +1,12 @@
 #pragma once
 #include <stdint.h>
 #include <d3d11.h>
-#include "grcTexture.h"
 #include "atArray.h"
 
 namespace rage
 {
+	class grcTexture;
+
 	using grcEffectTechnique__ = uint32_t;
 	using grcEffectVar__ = uint32_t;
 

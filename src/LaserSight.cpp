@@ -76,13 +76,6 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{
-		const rage::Vec3V beamColor(info->Color);
-		const rage::Vec4V dotColor(
-			beamColor.x,
-			beamColor.y,
-			beamColor.z,
-			info->MaxVisibility * 0.55f
-		);
 		const bool isPlayer = entity && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(entity) + 0x10B8)); // TODO: replace hardcoded offset
 
 		rage::Mat34V boneMtx;
@@ -158,7 +151,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			// based on arbitrary axis billboards: http://nehe.gamedev.net/article/billboarding_how_to/18011/
 			const rage::Vec3V center = (startPos + endPos) * 0.5f;
 			const rage::Vec3V look = camMtx.Position() - center;
-			const rage::Vec3V& up = (endPos - startPos).Normalized();
+			const rage::Vec3V up = (endPos - startPos).Normalized();
 			const rage::Vec3V right = up.Cross(look).Normalized();
 
 			if (info->DebugLines)
@@ -169,7 +162,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			const float distance = (endPos - startPos).Length();
 			const float endVisibility = info->MaxVisibility + ((info->MinVisibility - info->MaxVisibility) / info->BeamRange) * distance;
 
-			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right, beamColor, info->MaxVisibility, endVisibility);
+			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right, info->Color, info->MaxVisibility, endVisibility);
 		}
 	}
 }

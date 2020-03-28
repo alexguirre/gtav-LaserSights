@@ -7,12 +7,6 @@ cbuffer LaserParam : register(b10)
 	float2 LaserVisibilityMinMax;
 };
 
-sampler2D LaserSampler : register(s10) : register(t10)
-{
-    AddressU = WRAP;
-    AddressV = WRAP;
-};
-
 struct VS_LaserBeam_Input
 {
 	float3 position : POSITION;

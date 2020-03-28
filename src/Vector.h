@@ -17,19 +17,19 @@ namespace rage
 		};
 
 		inline Vec3V()
-			: v(_mm_setzero_ps())
+			: v{ _mm_setzero_ps() }
 		{}
 
 		inline Vec3V(float x, float y, float z)
-			: v(_mm_set_ps(0.0f, z, y, x))
+			: v{ _mm_set_ps(0.0f, z, y, x) }
 		{}
 
 		inline Vec3V(__m128 v)
-			: v(v)
+			: v{ v }
 		{}
 
 		inline Vec3V(const Vec3V& v)
-			: v(v.v)
+			: v{ v.v }
 		{}
 
 		inline Vec3V& operator=(const Vec3V& other)
@@ -89,19 +89,19 @@ namespace rage
 		};
 
 		inline Vec4V()
-			: v(_mm_setzero_ps())
+			: v{ _mm_setzero_ps() }
 		{}
 
 		inline Vec4V(float x, float y, float z, float w)
-			: v(_mm_set_ps(w, z, y, x))
+			: v{ _mm_set_ps(w, z, y, x) }
 		{}
 
 		inline Vec4V(__m128 v)
-			: v(v)
+			: v{ v }
 		{}
 
 		inline Vec4V(const Vec4V& v)
-			: v(v.v)
+			: v{ v.v }
 		{}
 
 		inline Vec4V& operator=(const Vec4V& other)

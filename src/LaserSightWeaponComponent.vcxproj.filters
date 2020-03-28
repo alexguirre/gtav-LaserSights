@@ -78,9 +78,6 @@
     <ClInclude Include="atArray.h">
       <Filter>rage</Filter>
     </ClInclude>
-    <ClInclude Include="grcTexture.h">
-      <Filter>rage\graphics</Filter>
-    </ClInclude>
     <ClInclude Include="grcDevice.h">
       <Filter>rage\graphics</Filter>
     </ClInclude>

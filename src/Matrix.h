@@ -11,34 +11,16 @@ namespace rage
 			Vec3V r[4];
 		};
 
-		inline Mat34V()
-		{
-			// empty
-		}
+		inline Mat34V() : r{ {}, {}, {}, {} } {}
 
 		inline Mat34V(const Vec3V& r0, const Vec3V& r1, const Vec3V& r2, const Vec3V& r3)
+			: r{ r0, r1, r2, r3 }
 		{
-			r[0] = r0;
-			r[1] = r1;
-			r[2] = r2;
-			r[3] = r3;
 		}
 
-		inline Mat34V(__m128 r0, __m128 r1, __m128 r2, __m128 r3)
-		{
-			r[0] = r0;
-			r[1] = r1;
-			r[2] = r2;
-			r[3] = r3;
-		}
+		inline Mat34V(__m128 r0, __m128 r1, __m128 r2, __m128 r3) : r{ r0, r1, r2, r3 } {}
 
-		inline Mat34V(const Mat34V& v)
-		{
-			r[0] = v.r[0];
-			r[1] = v.r[1];
-			r[2] = v.r[2];
-			r[3] = v.r[3];
-		}
+		inline Mat34V(const Mat34V& v) : r{ v.r[0], v.r[1], v.r[2], v.r[3] } {}
 
 		inline Mat34V& operator=(const Mat34V& other)
 		{
@@ -85,7 +67,7 @@ namespace rage
 
 			tangent0.Normalize();
 
-			rage::Vec3V tangent1 = normal.Cross(tangent0).Normalized();
+			const rage::Vec3V tangent1 = normal.Cross(tangent0).Normalized();
 
 			return Mat34V(
 				tangent0,
