@@ -9,6 +9,7 @@ public:
 	static void* const fiAssetManager_PushFolder;
 	static void* const fiAssetManager_PopFolder;
 	static void* const fiAssetManager_Instance;
+	static void* const grcEffect_dtor;
 	static void* const grcEffect_LookupVar;
 	static void* const grcEffect_LookupTechnique;
 	static void* const grcEffect_SetVarCommon;

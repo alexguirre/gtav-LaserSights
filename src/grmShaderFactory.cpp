@@ -1,9 +1,16 @@
 #include "grmShaderFactory.h"
 #include <Hooking.Patterns.h>
 #include "Addresses.h"
+#include <intrin.h>
 
 namespace rage
 {
+	grcEffect::~grcEffect()
+	{
+		using Fn = void(*)(grcEffect*);
+		reinterpret_cast<Fn>(Addresses::grcEffect_dtor)(this);
+	}
+
 	grcEffectVar__ grcEffect::LookupVar(const char* name)
 	{
 		using Fn = grcEffectVar__(*)(grcEffect*, const char*);
@@ -26,6 +33,15 @@ namespace rage
 	{
 		using Fn = void(*)(grcEffect*, grcInstanceData*, grcEffectVar__, grcTexture*);
 		reinterpret_cast<Fn>(Addresses::grcEffect_SetVar)(this, inst, var, texture);
+	}
+
+	void grcEffect::operator delete(void* ptr)
+	{
+		if (ptr)
+		{
+			uintptr_t allocator = *(uintptr_t*)(*(uintptr_t*)(__readgsqword(0x58u)) + 0xC8);
+			(*(void(**)(uintptr_t, void*))(*(uintptr_t*)allocator + 0x20))(allocator, ptr); // rage::sysMemAllocator::Free
+		}
 	}
 
 	bool grcInstanceData::LoadEffect(const char* name, void* tokenizer, bool a4)

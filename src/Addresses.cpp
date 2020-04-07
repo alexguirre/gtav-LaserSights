@@ -17,6 +17,8 @@ void* const Addresses::fiAssetManager_PopFolder = hook::get_pattern("FF 89 ? ? ?
 void* const Addresses::fiAssetManager_Instance =
 	hook::get_absolute_address(hook::get_pattern("48 8D 0D ? ? ? ? E8 ? ? ? ? 48 8D 0D ? ? ? ? 33 D2 E8 ? ? ? ? 8B C8", 3));
 
+void* const Addresses::grcEffect_dtor = hook::get_pattern("48 8B F9 E8 ? ? ? ? 4C 63 0D ? ? ? ? 4D 8B D9", -0x18);
+
 void* const Addresses::grcEffect_LookupVar = 
 	hook::get_absolute_address(hook::get_pattern("E8 ? ? ? ? 48 8D 15 ? ? ? ? 41 B0 01 89 46 20 48 8B 4F 08", 1));
 

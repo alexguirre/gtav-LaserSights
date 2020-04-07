@@ -75,11 +75,15 @@ namespace rage
 		atArray<grcFragmentProgram> m_FragmentPrograms;
 		// ...
 
+		~grcEffect();
+
 		grcEffectVar__ LookupVar(const char* name);
 		grcEffectTechnique__ LookupTechnique(const char* name);
 
 		void SetVarCommon(grcInstanceData* inst, grcEffectVar__ var, const void* data, int itemByteSize, int itemCount);
 		void SetVar(grcInstanceData* inst, grcEffectVar__ var, grcTexture* texture);
+
+		static void operator delete(void* ptr);
 	};
 
 	class grcInstanceData

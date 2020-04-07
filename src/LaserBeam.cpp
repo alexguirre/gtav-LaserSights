@@ -15,6 +15,8 @@
 #include "Hashing.h"
 #include <iterator>
 
+static constexpr bool ShaderHotReloadEnabled{ true };
+
 static struct LaserBeamGlobals
 {
 	rage::grmShader* Shader{ nullptr };
@@ -123,8 +125,61 @@ static void RenderBeams()
 	}
 }
 
+static void LoadShaderEffect()
+{
+	spdlog::debug("Loading shader effect...");
+	if (g_LaserBeam.Shader->m_Effect)
+	{
+		spdlog::debug(" > Deleting existing effect");
+		delete g_LaserBeam.Shader->m_Effect;
+	}
+
+	if constexpr (ShaderHotReloadEnabled)
+	{
+		rage::fiAssetManager::Instance()->PushFolder("shaders");
+	}
+	else
+	{
+		rage::fiAssetManager::Instance()->PushFolder("common:/shaders");
+	}
+	g_LaserBeam.Shader->LoadEffect("laserbeam");
+	rage::fiAssetManager::Instance()->PopFolder();
+
+
+	rage::grcEffect* effect = g_LaserBeam.Shader->m_Effect;
+	spdlog::debug(" > Effect:{}", reinterpret_cast<void*>(effect));
+
+	// lookup techniques
+	g_LaserBeam.Techniques.LaserBeam = effect->LookupTechnique("LaserBeam");
+
+	spdlog::debug(" > Techniques:");
+	spdlog::debug("     LaserBeam:{}", g_LaserBeam.Techniques.LaserBeam);
+
+	// lookup vars
+	g_LaserBeam.Vars.gTime = effect->LookupVar("gTime");
+
+	spdlog::debug(" > Vars:");
+	spdlog::debug("     gTime:{}", g_LaserBeam.Vars.gTime);
+}
+
 static void Render()
 {
+	if constexpr (ShaderHotReloadEnabled)
+	{
+		static bool keyJustPressed = false;
+
+		bool keyDown = GetAsyncKeyState(VK_F9) & 0x8000;
+		if (!keyJustPressed && keyDown)
+		{
+			keyJustPressed = true;
+			LoadShaderEffect();
+		}
+		else if (keyJustPressed && !keyDown)
+		{
+			keyJustPressed = false;
+		}
+	}
+
 	if (g_BeamDrawCallCountRender > 0)
 	{
 		rage::grcWorldIdentity();
@@ -141,27 +196,9 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 
 	spdlog::debug("RenderThreadInit");
 
-	// load shader
-	rage::fiAssetManager::Instance()->PushFolder("common:/shaders");
 	g_LaserBeam.Shader = rage::grmShaderFactory::Instance()->Create();
-	g_LaserBeam.Shader->LoadEffect("laserbeam");
-	rage::fiAssetManager::Instance()->PopFolder();
-
 	spdlog::debug("LaserBeam Shader:{}", reinterpret_cast<void*>(g_LaserBeam.Shader));
-
-	rage::grcEffect* effect = g_LaserBeam.Shader->m_Effect;
-
-	// lookup techniques
-	g_LaserBeam.Techniques.LaserBeam = effect->LookupTechnique("LaserBeam");
-
-	spdlog::debug("Techniques:");
-	spdlog::debug("  LaserBeam:{}", g_LaserBeam.Techniques.LaserBeam);
-
-	// lookup vars
-	g_LaserBeam.Vars.gTime = effect->LookupVar("gTime");
-
-	spdlog::debug("Vars:");
-	spdlog::debug("  gTime:{}", g_LaserBeam.Vars.gTime);
+	LoadShaderEffect();
 
 	// create vertex declarations
 	const rage::grcVertexElement laserBeamVertexElements[] =
