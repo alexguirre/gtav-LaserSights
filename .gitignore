@@ -354,3 +354,6 @@ healthchecksdb
 MigrationBackup/
 
 # End of https://www.gitignore.io/api/visualstudio
+/src/shaders/v-fxc.exe
+/src/shaders/shaders-lib/rage_shared.fx
+/src/shaders/laserbeam.fxc
