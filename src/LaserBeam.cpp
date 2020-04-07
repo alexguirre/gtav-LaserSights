@@ -13,6 +13,7 @@
 #include <MinHook.h>
 #include "Matrix.h"
 #include "Hashing.h"
+#include <iterator>
 
 static struct LaserBeamGlobals
 {
@@ -23,7 +24,7 @@ static struct LaserBeamGlobals
 	} Techniques{};
 	struct
 	{
-		rage::grcEffectVar__ LaserVisibilityMinMax{ 0 };
+		rage::grcEffectVar__ gTime{ 0 };
 	} Vars{};
 	struct
 	{
@@ -38,8 +39,6 @@ struct BeamDrawCall
 	rage::Vec3V m_To;
 	rage::Vec3V m_RightVector;
 	rage::Vec3V m_Color;
-	float m_FromVisibility{ 0.0f };
-	float m_ToVisibility{ 0.0f };
 };
 static std::array<BeamDrawCall, 256> g_BeamDrawCalls;
 static size_t g_BeamDrawCallCount;
@@ -48,69 +47,56 @@ static std::array<BeamDrawCall, 256> g_BeamDrawCallsRender;
 static size_t g_BeamDrawCallCountRender;
 
 static void SetLaserBeamVertex(
-	void* buffer, int index,
-	const rage::Vec3V& position, const rage::Vec3V& normal,
-	const rage::Vec4V& texCoord0, const rage::Vec4V& texCoord1Color, const rage::Vec4V& texCoord2)
+	void* buffer, size_t index,
+	const rage::Vec3V& position, const rage::Vec3V& color, const float texcoord[2])
 {
 	float* v = reinterpret_cast<float*>(reinterpret_cast<char*>(buffer) + g_LaserBeam.VertexDecls.LaserBeam->m_VertexSize * index);
 	v[0] = position.x;
 	v[1] = position.y;
 	v[2] = position.z;
-	v[3] = normal.x;
-	v[4] = normal.y;
-	v[5] = normal.z;
-	v[6] = texCoord0.x;
-	v[7] = texCoord0.y;
-	v[8] = texCoord0.z;
-	v[9] = texCoord0.w;
-	v[10] = texCoord1Color.x;
-	v[11] = texCoord1Color.y;
-	v[12] = texCoord1Color.z;
-	v[13] = texCoord1Color.w;
-	v[14] = texCoord2.x;
-	v[15] = texCoord2.y;
-	v[16] = texCoord2.z;
-	v[17] = texCoord2.w;
+	v[3] = color.x;
+	v[4] = color.y;
+	v[5] = color.z;
+	v[6] = texcoord[0];
+	v[7] = texcoord[1];
 }
 
-static void SetShaderLaserVisibilityMinMax(float min, float max)
+static void UpdateTime()
 {
-	float values[2] = { min, max };
-	g_LaserBeam.Shader->m_Effect->SetVarCommon(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserVisibilityMinMax, values, 8, 1);
-}
+	struct fwTimeSet
+	{
+		uint32_t totalTimeMs;
+		// ...
+	}* gameTime = reinterpret_cast<fwTimeSet*>(Addresses::fwTimer_sm_gameTime);
 
-static void SetDefaultShaderVars()
-{
-	SetShaderLaserVisibilityMinMax(0.2f, 100.0f);
+	float time = gameTime->totalTimeMs * 0.001f;
+	g_LaserBeam.Shader->m_Effect->SetVarCommon(g_LaserBeam.Shader, g_LaserBeam.Vars.gTime, &time, sizeof(float), 1);
 }
 
 static void RenderBeam(const BeamDrawCall& drawCall)
 {
-	const rage::Vec3V v0 = drawCall.m_From + drawCall.m_RightVector * drawCall.m_HalfWidth;
-	const rage::Vec3V v1 = drawCall.m_From - drawCall.m_RightVector * drawCall.m_HalfWidth;
-	const rage::Vec3V v2 = drawCall.m_To + drawCall.m_RightVector * drawCall.m_HalfWidth;
-	const rage::Vec3V v3 = drawCall.m_To - drawCall.m_RightVector * drawCall.m_HalfWidth;
-
-	static const rage::Vec3V n(0.0f, 1.0f, 0.0f);
-	static const rage::Vec4V v0TexCoord0(0.0f, 1.0f, 0.0f, 0.0f);
-	static const rage::Vec4V v0TexCoord2(0.015f, 1.0f, 0.0f, 0.0f);
-	static const rage::Vec4V v1TexCoord0(0.0f, -1.0f, 0.0f, 0.0f);
-	static const rage::Vec4V v1TexCoord2(0.015f, -1.0f, 0.0f, 0.0f);
-	static const rage::Vec4V v2TexCoord0(243.5f, 1.0f, 0.0f, 0.0f);
-	static const rage::Vec4V v2TexCoord2(0.01528f, 1.0f, 0.0f, 0.0f);
-	static const rage::Vec4V v3TexCoord0(243.5f, -1.0f, 0.0f, 0.0f);
-	static const rage::Vec4V v3TexCoord2(0.01528f, -1.0f, 0.0f, 0.0f);
-
-	const rage::Vec4V colorOrig(drawCall.m_Color.x, drawCall.m_Color.y, drawCall.m_Color.z, drawCall.m_FromVisibility);
-	const rage::Vec4V colorEnd(drawCall.m_Color.x, drawCall.m_Color.y, drawCall.m_Color.z, drawCall.m_ToVisibility);
-
-	SetShaderLaserVisibilityMinMax(drawCall.m_ToVisibility, drawCall.m_FromVisibility);
-
+	constexpr size_t VertexCount{ 4 };
+	const rage::Vec3V p[VertexCount]
+	{
+		drawCall.m_From + drawCall.m_RightVector * drawCall.m_HalfWidth,
+		drawCall.m_From - drawCall.m_RightVector * drawCall.m_HalfWidth,
+		drawCall.m_To + drawCall.m_RightVector * drawCall.m_HalfWidth,
+		drawCall.m_To - drawCall.m_RightVector * drawCall.m_HalfWidth,
+	};
+	const float length = (drawCall.m_To - drawCall.m_From).Length();
+	const float uv[VertexCount][2]
+	{
+		{ 0.0f, 1.0f },
+		{ 0.0f, 0.0f },
+		{ length, 1.0f },
+		{ length, 0.0f },
+	};
+	
 	void* buffer = rage::grcDevice::BeginVertices(rage::grcDrawMode::TriangleStrip, 4, g_LaserBeam.VertexDecls.LaserBeam->m_VertexSize);
-	SetLaserBeamVertex(buffer, 0, v0, n, v0TexCoord0, colorOrig, v0TexCoord2);
-	SetLaserBeamVertex(buffer, 1, v1, n, v1TexCoord0, colorOrig, v1TexCoord2);
-	SetLaserBeamVertex(buffer, 2, v2, n, v2TexCoord0, colorEnd, v2TexCoord2);
-	SetLaserBeamVertex(buffer, 3, v3, n, v3TexCoord0, colorEnd, v3TexCoord2);
+	for (size_t i = 0; i < VertexCount; i++)
+	{
+		SetLaserBeamVertex(buffer, i, p[i], drawCall.m_Color, uv[i]);
+	}
 	rage::grcDevice::EndVertices();
 }
 
@@ -142,7 +128,7 @@ static void Render()
 	if (g_BeamDrawCallCountRender > 0)
 	{
 		rage::grcWorldIdentity();
-		SetDefaultShaderVars();
+		UpdateTime();
 
 		RenderBeams();
 	}
@@ -172,20 +158,18 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 	spdlog::debug("  LaserBeam:{}", g_LaserBeam.Techniques.LaserBeam);
 
 	// lookup vars
-	g_LaserBeam.Vars.LaserVisibilityMinMax = effect->LookupVar("LaserVisibilityMinMax");
+	g_LaserBeam.Vars.gTime = effect->LookupVar("gTime");
 
 	spdlog::debug("Vars:");
-	spdlog::debug("  LaserVisibilityMinMax:{}", g_LaserBeam.Vars.LaserVisibilityMinMax);
+	spdlog::debug("  gTime:{}", g_LaserBeam.Vars.gTime);
 
 	// create vertex declarations
 	const rage::grcVertexElement laserBeamVertexElements[] =
 	{
 		/* InputSlot         SemanticName         SemanticIndex ByteSize        Format                     InputSlotClass InstanceDataStepRate */
 		{ 0, rage::grcVertexElement::SemanticName::POSITION, 0, 12, rage::grcVertexElement::Format::R32G32B32_FLOAT,    0, 0 },
-		{ 0, rage::grcVertexElement::SemanticName::NORMAL,   0, 12, rage::grcVertexElement::Format::R32G32B32_FLOAT,    0, 0 },
-		{ 0, rage::grcVertexElement::SemanticName::TEXCOORD, 0, 16, rage::grcVertexElement::Format::R32G32B32A32_FLOAT, 0, 0 },
-		{ 0, rage::grcVertexElement::SemanticName::TEXCOORD, 1, 16, rage::grcVertexElement::Format::R32G32B32A32_FLOAT, 0, 0 },
-		{ 0, rage::grcVertexElement::SemanticName::TEXCOORD, 2, 16, rage::grcVertexElement::Format::R32G32B32A32_FLOAT, 0, 0 },
+		{ 0, rage::grcVertexElement::SemanticName::COLOR,    0, 12, rage::grcVertexElement::Format::R32G32B32_FLOAT,    0, 0 },
+		{ 0, rage::grcVertexElement::SemanticName::TEXCOORD, 0, 8,  rage::grcVertexElement::Format::R32G32_FLOAT,       0, 0 },
 	};
 	g_LaserBeam.VertexDecls.LaserBeam = rage::grcDevice::CreateVertexDeclaration(laserBeamVertexElements, ARRAYSIZE(laserBeamVertexElements));
 
@@ -218,7 +202,7 @@ void LaserBeam::InstallHooks()
 	void* gtaRenderThreadGameInterface =
 		hook::get_absolute_address(
 			hook::get_absolute_address<char>(hook::get_pattern("E8 ? ? ? ? E8 ? ? ? ? E8 ? ? ? ? 48 8B 5C 24 ? 48 83 C4 20 5F E9 ? ? ? ?", 11)) + 3
-		);
+			);
 	void** gtaRenderThreadGameInterfaceVTable = *reinterpret_cast<void***>(gtaRenderThreadGameInterface);
 
 	CGtaRenderThreadGameInterface_RenderThreadInit_orig =
@@ -230,11 +214,11 @@ void LaserBeam::InstallHooks()
 		sub_D63908_detour, reinterpret_cast<void**>(&sub_D63908_orig));
 }
 
-void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector, const rage::Vec3V& color, float fromVisibility, float toVisibility)
+void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector, const rage::Vec3V& color)
 {
 	if (g_BeamDrawCallCount < g_BeamDrawCalls.size())
 	{
-		g_BeamDrawCalls[g_BeamDrawCallCount] = { width * 0.5f, from, to, rightVector, color, fromVisibility, toVisibility };
+		g_BeamDrawCalls[g_BeamDrawCallCount] = { width * 0.5f, from, to, rightVector, color };
 		g_BeamDrawCallCount++;
 	}
 }

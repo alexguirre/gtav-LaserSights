@@ -92,3 +92,5 @@ void* const Addresses::CControlMgr_GetIoValue = hook::get_pattern("8D 82 ? ? ? ?
 void* const Addresses::ioValue_IsPressed = hook::get_pattern("0F 29 74 24 ? 49 8B F8 48 8B F1 0F 28 F1 E8 ? ? ? ? 33 DB 84 C0 74 17", -0xF);
 
 void* const Addresses::IsNightVisionEnabled = hook::get_absolute_address(hook::get_pattern("44 88 35 ? ? ? ? 44 88 35 ? ? ? ? 44 89 35 ? ? ? ? 41 84 C7", 3));
+
+void* const Addresses::fwTimer_sm_gameTime = hook::get_absolute_address(hook::get_pattern("8B 05 ? ? ? ? 0F 5B C9 F3 0F 59 0D ? ? ? ? F3 0F 59 C8", 2));

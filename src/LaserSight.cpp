@@ -159,10 +159,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 				CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
 			}
 
-			const float distance = (endPos - startPos).Length();
-			const float endVisibility = info->MaxVisibility + ((info->MinVisibility - info->MaxVisibility) / info->BeamRange) * distance;
-
-			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right, info->Color, info->MaxVisibility, endVisibility);
+			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right, info->Color);
 		}
 	}
 }

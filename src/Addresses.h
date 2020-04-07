@@ -41,5 +41,6 @@ public:
 	static void* const CControlMgr_GetIoValue;
 	static void* const ioValue_IsPressed;
 	static void* const IsNightVisionEnabled;
+	static void* const fwTimer_sm_gameTime;
 };
 
