@@ -58,11 +58,9 @@ float4 PS_LaserBeam(VS_LaserBeam_Output input) : SV_Target
 {
 	float2 uv = input.texcoord;
 	uv.y = uv.y - 0.5;
-	float t = sin(gTime*10.0+uv.x)*0.0125+0.95;
+	float t = abs(sin(gTime+uv.x))*0.15+0.9;
 	float v = smoothstep(0.5*t, 0.0, abs(uv.y));
-    //float v2 = smoothstep(0.0, 0.5*t, abs(uv.y));
-    float a = abs(my_noise(float3(uv*0.5, gTime+uv.x*0.05)))*0.25+0.005;
-	//return float4(v*a, 0.0, 0.0, a);
+    float a = (my_noise(float3(gTime*0.1*uv*0.5, gTime+uv.x))+1.0)*0.25+0.005;
     return float4(input.color.r*v*a, input.color.g*v*a, input.color.b*v*a, 0.0);
 }
 
