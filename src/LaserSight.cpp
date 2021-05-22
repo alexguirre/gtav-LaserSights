@@ -50,6 +50,24 @@ static bool IsNightVisionEnabled()
 	return *reinterpret_cast<bool*>(Addresses::IsNightVisionEnabled);
 }
 
+static bool IsLaserVisible(CWeaponComponentLaserSight* sight)
+{
+	if (sight->m_IsOff)
+	{
+		return false;
+	}
+
+	const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(sight->m_ComponentInfo);
+
+	if (info->IR && !IsNightVisionEnabled())
+	{
+		// if the laser is infrared it is only visible with night vision
+		return false;
+	}
+
+	return true;
+}
+
 static void(*CWeaponComponentLaserSight_Process_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
 static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight* This, rage::fwEntity* entity)
 {
@@ -62,14 +80,7 @@ static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight
 static void(*CWeaponComponentLaserSight_ProcessPostPreRender_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
 static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponComponentLaserSight* This, rage::fwEntity* entity)
 {
-	if (This->m_IsOff)
-	{
-		return;
-	}
-
-	const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
-
-	if (info->IR && !IsNightVisionEnabled())
+	if (!IsLaserVisible(This))
 	{
 		return;
 	}
@@ -79,6 +90,8 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		// TODO: replace hardcoded offset
 		constexpr int PlayerInfoOffset = 0x10C8; // b2245
 		const bool isPlayer = entity && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(entity) + PlayerInfoOffset));
+
+		const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
 
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);
@@ -169,13 +182,27 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 	}
 }
 
+static void(*CWeaponComponentLaserSight_ApplyAccuracyModifier_orig)(CWeaponComponentLaserSight* This, void* accuracyStruct);
+static void CWeaponComponentLaserSight_ApplyAccuracyModifier_detour(CWeaponComponentLaserSight* This, void* accuracyStruct)
+{
+	if (!IsLaserVisible(This))
+	{
+		return;
+	}
+
+	// only apply the accuracy modifier is the laser is visible
+	CWeaponComponentLaserSight_ApplyAccuracyModifier_orig(This, accuracyStruct);
+}
+
 void LaserSight::InstallHooks()
 {
 	void** vtable = hook::get_absolute_address<void*>(hook::get_pattern("48 8D 05 ? ? ? ? C7 43 ? ? ? ? ? C6 43 50 00", 3));
 
 	CWeaponComponentLaserSight_Process_orig = reinterpret_cast<decltype(CWeaponComponentLaserSight_Process_orig)>(vtable[3]);
 	CWeaponComponentLaserSight_ProcessPostPreRender_orig = reinterpret_cast<decltype(CWeaponComponentLaserSight_ProcessPostPreRender_orig)>(vtable[4]);
+	CWeaponComponentLaserSight_ApplyAccuracyModifier_orig = reinterpret_cast<decltype(CWeaponComponentLaserSight_ApplyAccuracyModifier_orig)>(vtable[5]);
 
 	vtable[3] = CWeaponComponentLaserSight_Process_detour;
 	vtable[4] = CWeaponComponentLaserSight_ProcessPostPreRender_detour;
+	vtable[5] = CWeaponComponentLaserSight_ApplyAccuracyModifier_detour;
 }
