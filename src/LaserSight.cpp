@@ -113,9 +113,12 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		{
 			static WorldProbe::CShapeTestResults* results = new WorldProbe::CShapeTestResults(1);
 
+			const rage::fwEntity* weaponObject = *reinterpret_cast<rage::fwEntity**>(reinterpret_cast<uint8_t*>(This->m_OwnerWeapon) + 0x58);
+
 			results->AbortTest();
 			WorldProbe::CShapeTestProbeDesc desc;
-			desc.SetExcludeEntities(&This->m_ComponentObject, 1, 0);
+			const rage::fwEntity* excludeEntities[]{ This->m_ComponentObject, weaponObject };
+			desc.SetExcludeEntities(excludeEntities, ARRAYSIZE(excludeEntities), 0);
 			desc.SetResultsStructure(results);
 			// TODO: find more appropriate shapetest flags
 			desc.m_Flags1 = 256; // flags copied from game code
