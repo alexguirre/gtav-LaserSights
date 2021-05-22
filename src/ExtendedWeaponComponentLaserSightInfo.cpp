@@ -48,8 +48,6 @@ MEMBER_DATA_STRUCT(LaserSightBone, 0);
 MEMBER_DATA_FLOAT(BeamWidth);
 MEMBER_DATA_FLOAT(BeamRange);
 MEMBER_DATA_VEC3V(Color);
-MEMBER_DATA_FLOAT(MinVisibility);
-MEMBER_DATA_FLOAT(MaxVisibility);
 MEMBER_DATA_UINT(CoronaColor);
 MEMBER_DATA_BOOL(IR);
 MEMBER_DATA_BOOL(DebugLines);
@@ -64,8 +62,6 @@ rage::parMemberCommonData* ExtendedWeaponComponentLaserSightInfo::MemberData[Num
 	DATA_PTR(BeamWidth),
 	DATA_PTR(BeamRange),
 	DATA_PTR(Color),
-	DATA_PTR(MinVisibility),
-	DATA_PTR(MaxVisibility),
 	DATA_PTR(CoronaColor),
 	DATA_PTR(IR),
 	DATA_PTR(DebugLines),
@@ -83,8 +79,6 @@ uint32_t ExtendedWeaponComponentLaserSightInfo::MemberOffsets[NumMembers]
 	OFFSET(BeamWidth),
 	OFFSET(BeamRange),
 	OFFSET(Color),
-	OFFSET(MinVisibility),
-	OFFSET(MaxVisibility),
 	OFFSET(CoronaColor),
 	OFFSET(IR),
 	OFFSET(DebugLines),
