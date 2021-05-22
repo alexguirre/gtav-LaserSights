@@ -14,8 +14,44 @@
 #include "Matrix.h"
 #include "Hashing.h"
 #include <iterator>
+#include <fileapi.h>
 
 static constexpr bool ShaderHotReloadEnabled{ true };
+static bool ReloadShaders{ false };
+
+static DWORD ShadersFileWatcher(LPVOID)
+{
+	char path[MAX_PATH];
+	GetFullPathName(".\\shaders\\", MAX_PATH, path, NULL);
+	HANDLE handle = FindFirstChangeNotification(path, TRUE, FILE_NOTIFY_CHANGE_LAST_WRITE);
+	if (handle == INVALID_HANDLE_VALUE)
+	{
+		spdlog::debug("Failed to create shaders file watcher");
+		return 0;
+	}
+
+	while (true)
+	{
+		switch (WaitForSingleObject(handle, INFINITE))
+		{
+		case WAIT_OBJECT_0:
+			ReloadShaders = true;
+			if (!FindNextChangeNotification(handle))
+			{
+				spdlog::debug("FindNextChangeNotification failed");
+				FindCloseChangeNotification(handle);
+				return 0;
+			}
+			break;
+		}
+	}
+}
+
+static void StartShadersFileWatcher()
+{
+	HANDLE h = CreateThread(NULL, 0, &ShadersFileWatcher, NULL, 0, NULL);
+	CloseHandle(h);
+}
 
 static struct LaserBeamGlobals
 {
@@ -160,6 +196,8 @@ static void LoadShaderEffect()
 
 	spdlog::debug(" > Vars:");
 	spdlog::debug("     gTime:{}", g_LaserBeam.Vars.gTime);
+
+	ReloadShaders = false;
 }
 
 static void Render()
@@ -172,11 +210,16 @@ static void Render()
 		if (!keyJustPressed && keyDown)
 		{
 			keyJustPressed = true;
-			LoadShaderEffect();
+			ReloadShaders = true;
 		}
 		else if (keyJustPressed && !keyDown)
 		{
 			keyJustPressed = false;
+		}
+
+		if (ReloadShaders)
+		{
+			LoadShaderEffect();
 		}
 	}
 
@@ -212,6 +255,11 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 
 	spdlog::debug("Vertex Declarations:");
 	spdlog::debug("  LaserBeam:{}", reinterpret_cast<void*>(g_LaserBeam.VertexDecls.LaserBeam));
+
+	if constexpr (ShaderHotReloadEnabled)
+	{
+		StartShadersFileWatcher();
+	}
 }
 
 static void AddDrawCommandCallback(void(*cb)())
