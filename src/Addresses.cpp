@@ -39,7 +39,7 @@ void* const Addresses::grmShader_EndDraw =
 void* const Addresses::grmShader_BeginPass = hook::get_pattern("4C 8B C1 48 8B 49 08 E9 ? ? ? ?");
 
 void* const Addresses::grmShader_EndPass =
-	hook::get_absolute_address(hook::get_pattern("E8 ? ? ? ? 49 83 C7 02 48 FF CD 0F 85 ? ? ? ?", 1));
+	hook::get_absolute_address(hook::get_pattern("E8 ? ? ? ? 48 8B 0D ? ? ? ? E8 ? ? ? ? E8 ? ? ? ? 0F 28 75 60", 1));
 
 void* const Addresses::grmShaderFactory_Instance =
 	hook::get_absolute_address(hook::get_pattern("48 8B 0D ? ? ? ? 83 CE FF 48 8B 01 FF 50 08", 3));

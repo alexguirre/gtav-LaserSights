@@ -19,9 +19,9 @@ static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end,
 static rage::aiTaskTree* GetPedTaskTree(rage::fwEntity* ped)
 {
 	// TODO: get offsets from patterns
-	static const int IntelligenceOffset = 0x10B0;
-	static const int TaskManagerOffset = 0x370; // v1868
-	static const int TaskTreeOffset = 0x0;
+	constexpr int IntelligenceOffset = 0x10C0;
+	constexpr int TaskManagerOffset = 0x370; // b2245
+	constexpr int TaskTreeOffset = 0x0;
 
 	uint8_t* p = reinterpret_cast<uint8_t*>(ped);
 	uint8_t* intelligence = *reinterpret_cast<uint8_t**>(p + IntelligenceOffset);
@@ -76,7 +76,9 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{
-		const bool isPlayer = entity && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(entity) + 0x10B8)); // TODO: replace hardcoded offset
+		// TODO: replace hardcoded offset
+		constexpr int PlayerInfoOffset = 0x10C8; // b2245
+		const bool isPlayer = entity && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(entity) + PlayerInfoOffset));
 
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);

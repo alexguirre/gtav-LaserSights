@@ -10,6 +10,7 @@ namespace rage
 		virtual ~fwEntity() = 0;
 		virtual bool GetIsClassId(uint32_t classHash) = 0;
 		virtual uint32_t GetClassId() = 0;
+		virtual uint32_t GetBaseClassId() = 0;
 		virtual void f_3() = 0;
 		virtual void f_4() = 0;
 		virtual void f_5() = 0;
