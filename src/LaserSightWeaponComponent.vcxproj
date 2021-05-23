@@ -102,6 +102,7 @@
     <ClCompile Include="aiTask.cpp" />
     <ClCompile Include="camBaseCamera.cpp" />
     <ClCompile Include="CCoronas.cpp" />
+    <ClCompile Include="CReplay.cpp" />
     <ClCompile Include="ExtendedWeaponComponentLaserSightInfo.cpp" />
     <ClCompile Include="fiAssetManager.cpp" />
     <ClCompile Include="grcDevice.cpp" />
@@ -110,6 +111,7 @@
     <ClCompile Include="LaserBeam.cpp" />
     <ClCompile Include="LaserSight.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Replay.cpp" />
     <ClCompile Include="WorldProbe.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -118,6 +120,7 @@
     <ClInclude Include="atArray.h" />
     <ClInclude Include="camBaseCamera.h" />
     <ClInclude Include="CCoronas.h" />
+    <ClInclude Include="CReplay.h" />
     <ClInclude Include="CTaskAimGun.h" />
     <ClInclude Include="CWeaponComponentLaserSight.h" />
     <ClInclude Include="ExtendedWeaponComponentLaserSightInfo.h" />
@@ -131,6 +134,7 @@
     <ClInclude Include="LaserSight.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="parStructure.h" />
+    <ClInclude Include="Replay.h" />
     <ClInclude Include="Vector.h" />
     <ClInclude Include="WorldProbe.h" />
   </ItemGroup>

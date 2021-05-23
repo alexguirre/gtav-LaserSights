@@ -10,6 +10,7 @@
 #include "camBaseCamera.h"
 #include "WorldProbe.h"
 #include "CTaskAimGun.h"
+#include "CReplay.h"
 
 static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end, uint32_t color)
 {
@@ -68,6 +69,11 @@ static bool IsLaserVisible(CWeaponComponentLaserSight* sight)
 	return true;
 }
 
+static rage::fwEntity* GetWeaponObject(CWeaponComponentLaserSight* sight)
+{
+	return *reinterpret_cast<rage::fwEntity**>(reinterpret_cast<uint8_t*>(sight->m_OwnerWeapon) + 0x58);
+}
+
 static void(*CWeaponComponentLaserSight_Process_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
 static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight* This, rage::fwEntity* entity)
 {
@@ -87,6 +93,18 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{
+		if (CReplay::IsRecordingActive())
+		{
+			// TODO: the lasersight component is not getting created in replay
+			CPacketWeaponFlashLight packet{};
+			CEntity* entities[]{ reinterpret_cast<CEntity*>(GetWeaponObject(This)), nullptr };
+			if (entities[0])
+			{
+				packet.AddToRecording(entities, false, false);
+			}
+		}
+
+
 		// TODO: replace hardcoded offset
 		constexpr int PlayerInfoOffset = 0x10C8; // b2245
 		const bool isPlayer = entity && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(entity) + PlayerInfoOffset));
@@ -126,11 +144,9 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		{
 			static WorldProbe::CShapeTestResults* results = new WorldProbe::CShapeTestResults(1);
 
-			const rage::fwEntity* weaponObject = *reinterpret_cast<rage::fwEntity**>(reinterpret_cast<uint8_t*>(This->m_OwnerWeapon) + 0x58);
-
 			results->AbortTest();
 			WorldProbe::CShapeTestProbeDesc desc;
-			const rage::fwEntity* excludeEntities[]{ This->m_ComponentObject, weaponObject };
+			const rage::fwEntity* excludeEntities[]{ This->m_ComponentObject, GetWeaponObject(This) };
 			desc.SetExcludeEntities(excludeEntities, ARRAYSIZE(excludeEntities), 0);
 			desc.SetResultsStructure(results);
 			// TODO: find more appropriate shapetest flags

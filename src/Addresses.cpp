@@ -96,3 +96,8 @@ void* const Addresses::ioValue_IsPressed = hook::get_pattern("0F 29 74 24 ? 49 8
 void* const Addresses::IsNightVisionEnabled = hook::get_absolute_address(hook::get_pattern("44 88 35 ? ? ? ? 44 88 35 ? ? ? ? 44 89 35 ? ? ? ? 41 84 C7", 3));
 
 void* const Addresses::fwTimer_sm_gameTime = hook::get_absolute_address(hook::get_pattern("8B 05 ? ? ? ? 0F 5B C9 F3 0F 59 0D ? ? ? ? F3 0F 59 C8", 2));
+
+void* const Addresses::CReplay_IsRecordingActive = hook::get_pattern("8B 0D ? ? ? ? B8 ? ? ? ? 3B C8 74 0C 85 C9 75 11 38 05");
+
+void* const Addresses::CPacketWeaponFlashLight_AddToRecording =
+	hook::get_absolute_address(hook::get_pattern("4C 89 7D 88 E8 ? ? ? ? 4C 8D 9C 24 ? ? ? ? 49 8B 5B 48 41 0F 28 73", 5));

@@ -48,6 +48,10 @@
       <Filter>rage</Filter>
     </ClCompile>
     <ClCompile Include="ExtendedWeaponComponentLaserSightInfo.cpp" />
+    <ClCompile Include="Replay.cpp" />
+    <ClCompile Include="CReplay.cpp">
+      <Filter>five</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LaserSight.h" />
@@ -100,6 +104,10 @@
       <Filter>rage\parser</Filter>
     </ClInclude>
     <ClInclude Include="ExtendedWeaponComponentLaserSightInfo.h" />
+    <ClInclude Include="Replay.h" />
+    <ClInclude Include="CReplay.h">
+      <Filter>five</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dependencies">

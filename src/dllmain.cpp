@@ -2,6 +2,7 @@
 #include "LaserBeam.h"
 #include "LaserSight.h"
 #include "ExtendedWeaponComponentLaserSightInfo.h"
+#include "Replay.h"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <MinHook.h>
@@ -17,6 +18,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 		ExtendedWeaponComponentLaserSightInfo::InstallHooks();
 		LaserBeam::InstallHooks();
 		LaserSight::InstallHooks();
+		Replay::InstallHooks();
 		MH_EnableHook(MH_ALL_HOOKS);
 	}
 	else if (reason == DLL_PROCESS_DETACH)

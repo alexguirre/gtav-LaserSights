@@ -43,5 +43,7 @@ public:
 	static void* const ioValue_IsPressed;
 	static void* const IsNightVisionEnabled;
 	static void* const fwTimer_sm_gameTime;
+	static void* const CReplay_IsRecordingActive;
+	static void* const CPacketWeaponFlashLight_AddToRecording;
 };
 
