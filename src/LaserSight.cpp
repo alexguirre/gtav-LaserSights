@@ -51,6 +51,11 @@ static bool IsNightVisionEnabled()
 	return *reinterpret_cast<bool*>(Addresses::IsNightVisionEnabled);
 }
 
+static void PlayToggleSound(void* weapon, bool isOn)
+{
+	reinterpret_cast<void(*)(void*, void*, bool)>(Addresses::PlayWeaponFlashLightToggleSound)(Addresses::audWeaponAudioEntity_Instance, weapon, isOn);
+}
+
 static bool IsLaserVisible(CWeaponComponentLaserSight* sight)
 {
 	if (sight->m_IsOff)
@@ -80,6 +85,7 @@ static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight
 	if (IsContextPressed())
 	{
 		This->m_IsOff = !This->m_IsOff;
+		PlayToggleSound(This->m_OwnerWeapon, !This->m_IsOff);
 	}
 }
 

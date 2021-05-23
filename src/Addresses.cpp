@@ -1,6 +1,7 @@
 #include "Addresses.h"
 #include <Hooking.Patterns.h>
 #include "Hooking.Helper.h"
+#include <array>
 
 void* const Addresses::CCoronas_Draw = hook::get_pattern("44 89 4C 24 ? 48 83 EC 28 0F 29 74 24 ?");
 
@@ -101,3 +102,14 @@ void* const Addresses::CReplay_IsRecordingActive = hook::get_pattern("8B 0D ? ? 
 
 void* const Addresses::CPacketWeaponFlashLight_AddToRecording =
 	hook::get_absolute_address(hook::get_pattern("4C 89 7D 88 E8 ? ? ? ? 4C 8D 9C 24 ? ? ? ? 49 8B 5B 48 41 0F 28 73", 5));
+
+static const auto tempAddr = []() -> std::array<void*, 2>
+{
+	auto addr = hook::get_pattern<uint8_t>("48 8D 0D ? ? ? ? 41 80 E0 01 E8 ? ? ? ? 48 85 FF 0F 84");
+	return {
+		hook::get_absolute_address(addr + 3),
+		hook::get_absolute_address(addr + 12)
+	};
+}();
+void* const Addresses::audWeaponAudioEntity_Instance = tempAddr[0];
+void* const Addresses::PlayWeaponFlashLightToggleSound = tempAddr[1];

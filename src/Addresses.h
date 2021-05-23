@@ -45,5 +45,7 @@ public:
 	static void* const fwTimer_sm_gameTime;
 	static void* const CReplay_IsRecordingActive;
 	static void* const CPacketWeaponFlashLight_AddToRecording;
+	static void* const audWeaponAudioEntity_Instance;
+	static void* const PlayWeaponFlashLightToggleSound;
 };
 
