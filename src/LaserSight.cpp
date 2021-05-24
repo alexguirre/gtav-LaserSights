@@ -120,8 +120,10 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);
 
-		rage::Vec3V startPos = boneMtx.Position();
-		rage::Vec3V endPos = startPos + boneMtx.Forward() * info->BeamRange;
+		const rage::Vec3V origStartPos = boneMtx.Position();
+		const rage::Vec3V origEndPos = origStartPos + boneMtx.Forward() * info->BeamRange;
+
+		rage::Vec3V startPos = origStartPos, endPos = origEndPos;
 
 		if (info->DebugLines)
 		{
@@ -143,7 +145,21 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 				(task = taskTree->FindTaskByTypeActive(CTaskAimGunBlindFire)))
 			{
 				CTaskAimGun* aimTask = reinterpret_cast<CTaskAimGun*>(task);
-				aimTask->DoShapeTest(entity, &startPos, &endPos, nullptr, nullptr, false);
+				rage::Vec3V aimStartPos = origStartPos, aimEndPos = origEndPos;
+				aimTask->DoShapeTest(entity, &aimStartPos, &aimEndPos, nullptr, nullptr, false);
+
+				const rage::Vec3V origDir = (origEndPos - origStartPos).Normalized();
+				const rage::Vec3V aimDir = (aimEndPos - aimStartPos).Normalized();
+
+				const float angleCos = origDir.Dot(aimDir);
+				const float angleDegrees = acosf(angleCos) * 180.0f / 3.1415926f;
+				if (angleDegrees < 17.5f)
+				{
+					// only use aiming direction if it is close enough to the component direction
+					// to avoid visual issues in first person/rolling/etc.
+					startPos = aimStartPos;
+					endPos = aimEndPos;
+				}
 			}
 		}
 
