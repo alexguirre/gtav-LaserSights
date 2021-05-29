@@ -7,3 +7,6 @@
 [submodule "dependencies/minhook"]
 	path = dependencies/minhook
 	url = https://github.com/TsudaKageyu/minhook.git
+[submodule "dependencies/jitasm"]
+	path = dependencies/jitasm
+	url = https://github.com/hikaru-i/jitasm.git

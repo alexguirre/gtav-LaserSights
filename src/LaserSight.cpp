@@ -10,7 +10,7 @@
 #include "camBaseCamera.h"
 #include "WorldProbe.h"
 #include "CTaskAimGun.h"
-#include "CReplay.h"
+#include "Replay.h"
 
 static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end, uint32_t color)
 {
@@ -92,6 +92,11 @@ static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight
 static void(*CWeaponComponentLaserSight_ProcessPostPreRender_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
 static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponComponentLaserSight* This, rage::fwEntity* entity)
 {
+	if (This->m_OwnerWeapon)
+	{
+		Replay::RecordLaserSightState(GetWeaponObject(This), !This->m_IsOff);
+	}
+
 	if (!IsLaserVisible(This))
 	{
 		return;
@@ -99,18 +104,6 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{
-		if (CReplay::IsRecordingActive())
-		{
-			// TODO: the lasersight component is not getting created in replay
-			CPacketWeaponFlashLight packet{};
-			CEntity* entities[]{ reinterpret_cast<CEntity*>(GetWeaponObject(This)), nullptr };
-			if (entities[0])
-			{
-				packet.AddToRecording(entities, false, false);
-			}
-		}
-
-
 		// TODO: replace hardcoded offset
 		constexpr int PlayerInfoOffset = 0x10C8; // b2245
 		const bool isPlayer = entity && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(entity) + PlayerInfoOffset));
