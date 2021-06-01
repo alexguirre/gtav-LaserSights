@@ -55,6 +55,7 @@ static void StartShadersFileWatcher()
 
 static struct LaserBeamGlobals
 {
+	rage::grcBlendStateHandle BlendState{};
 	rage::grmShader* Shader{ nullptr };
 	struct
 	{
@@ -63,11 +64,13 @@ static struct LaserBeamGlobals
 	struct
 	{
 		rage::grcEffectVar__ gTime{ 0 };
+		rage::grcEffectVar__ LaserNoise{ 0 };
 	} Vars{};
 	struct
 	{
 		rage::grcVertexDeclaration* LaserBeam{ nullptr };
 	} VertexDecls{};
+	rage::grcTexture* LaserNoiseTexture{ nullptr };
 } g_LaserBeam;
 
 struct BeamDrawCall
@@ -83,6 +86,12 @@ static size_t g_BeamDrawCallCount;
 // copy of the draw calls to be used in the render thread
 static std::array<BeamDrawCall, 256> g_BeamDrawCallsRender;
 static size_t g_BeamDrawCallCountRender;
+
+static rage::grcTexture* GetTextureFromGraphicsTxd(uint32_t nameHash)
+{
+	using Fn = rage::grcTexture* (*)(uint32_t);
+	return reinterpret_cast<Fn>(Addresses::GetTextureFromGraphicsTxd)(nameHash);
+}
 
 static void SetLaserBeamVertex(
 	void* buffer, size_t index,
@@ -109,6 +118,14 @@ static void UpdateTime()
 
 	float time = gameTime->totalTimeMs * 0.001f;
 	g_LaserBeam.Shader->m_Effect->SetVarCommon(g_LaserBeam.Shader, g_LaserBeam.Vars.gTime, &time, sizeof(float), 1);
+}
+
+static void BindNoiseTexture()
+{
+	if (g_LaserBeam.LaserNoiseTexture)
+	{
+		g_LaserBeam.Shader->m_Effect->SetVar(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserNoise, g_LaserBeam.LaserNoiseTexture);
+	}
 }
 
 static void RenderBeam(const BeamDrawCall& drawCall)
@@ -142,6 +159,7 @@ static void RenderBeams()
 {
 	if (g_BeamDrawCallCountRender > 0)
 	{
+		rage::grcSetBlendState(g_LaserBeam.BlendState);
 		if (g_LaserBeam.Shader->BeginDraw(static_cast<rage::grmShader::eDrawType>(0), true, g_LaserBeam.Techniques.LaserBeam))
 		{
 			g_LaserBeam.Shader->BeginPass(0);
@@ -163,6 +181,18 @@ static void RenderBeams()
 
 static void LoadShaderEffect()
 {
+	spdlog::debug("Creating blend state...");
+	D3D11_BLEND_DESC blendDesc{};
+	blendDesc.AlphaToCoverageEnable = false;
+	blendDesc.IndependentBlendEnable = false;
+	blendDesc.RenderTarget[0] = {
+		true,
+		D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_OP_ADD,	// color
+		D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD,	// alpha
+		D3D11_COLOR_WRITE_ENABLE_ALL
+	};
+	g_LaserBeam.BlendState = rage::grcCreateBlendState(blendDesc);
+
 	spdlog::debug("Loading shader effect...");
 	if (g_LaserBeam.Shader->m_Effect)
 	{
@@ -193,9 +223,11 @@ static void LoadShaderEffect()
 
 	// lookup vars
 	g_LaserBeam.Vars.gTime = effect->LookupVar("gTime");
+	g_LaserBeam.Vars.LaserNoise = effect->LookupVar("LaserNoise");
 
 	spdlog::debug(" > Vars:");
 	spdlog::debug("     gTime:{}", g_LaserBeam.Vars.gTime);
+	spdlog::debug("     LaserNoise:{}", g_LaserBeam.Vars.LaserNoise);
 
 	ReloadShaders = false;
 }
@@ -220,11 +252,19 @@ static void Render()
 		if (ReloadShaders)
 		{
 			LoadShaderEffect();
+			BindNoiseTexture();
 		}
 	}
 
 	if (g_BeamDrawCallCountRender > 0)
 	{
+		if (!g_LaserBeam.LaserNoiseTexture)
+		{
+			g_LaserBeam.LaserNoiseTexture = GetTextureFromGraphicsTxd(0x9FD921D0/* laser_noise */);
+			spdlog::debug("LaserNoiseTexture:{}", reinterpret_cast<void*>(g_LaserBeam.LaserNoiseTexture));
+			BindNoiseTexture();
+		}
+
 		rage::grcWorldIdentity();
 		UpdateTime();
 

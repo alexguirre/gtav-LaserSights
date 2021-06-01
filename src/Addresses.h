@@ -25,6 +25,8 @@ public:
 	static void* const grcDevice_SetVertexDeclaration;
 	static void* const grcDevice_BeginVertices;
 	static void* const grcDevice_EndVertices;
+	static void* const grcCreateBlendState;
+	static void* const grcSetBlendState;
 	static void* const grcWorldIdentity;
 	static void* const AddDrawCommandCallback;
 	static void* const CurrentCamera;

@@ -5,6 +5,12 @@ cbuffer LaserParam : register(b10)
 	float gTime;
 };
 
+sampler2D LaserNoise : register(s10) : register(t10)
+{
+    AddressU = WRAP;
+    AddressV = WRAP;
+};
+
 struct VS_LaserBeam_Input
 {
 	float3 position : POSITION;
@@ -56,12 +62,38 @@ float my_noise( float3 x )
 
 float4 PS_LaserBeam(VS_LaserBeam_Output input) : SV_Target
 {
-	float2 uv = input.texcoord;
-	uv.y = uv.y - 0.5;
-	float t = abs(sin(gTime+uv.x))*0.15+0.9;
-	float v = smoothstep(0.5*t, 0.0, abs(uv.y));
+    float2 uv = input.texcoord;
+    uv.y = uv.y - 0.5;
+    float t = abs(sin(gTime+uv.x))*0.15+0.9;
+    float v = smoothstep(0.85*t, 0.0, abs(uv.y));
     float a = (my_noise(float3(gTime*0.1*uv*0.5, gTime+uv.x))+1.0)*0.25+0.005;
-    return float4(input.color.r*v*a, input.color.g*v*a, input.color.b*v*a, 0.0);
+    float3 temp = input.color.rgb * v * a;
+
+
+    float2 noiseUV = mul(gViewInverse, float4(input.position.xyz, 1.0)).xy * 0.005;
+    float noise = tex2D(LaserNoise, noiseUV).a;
+
+    // return float4(temp, v*0.0125*noise);
+
+    // float2 noiseUV = mul(gViewInverse, float4(input.position.xyz, 1.0)).xy * 0.015;
+    
+    float4 timers = float4(gTime, gTime, gTime, gTime);
+    float4 r0, r1;
+    float4 rtdim = float4(0.00052, 0.00093, 0.0, 0.0);
+    r0.x = rtdim.x / rtdim.y;
+    r1.yz = rtdim.xy * input.position.xy;
+    r1.x = r1.y / r0.x;
+    r0.xyzw = (gTime * 0.25) * float4(0.140000001,0.0299999993,0.0799999982,-0.0900000036) + r1.xzxz;
+    r0.zw = float2(0.200000003,0.200000003) + r0.zw;
+    float dustNoise = tex2D(LaserNoise, r0.zw*0.15).a;
+    r0.x = tex2D(LaserNoise, r0.xy*1.15).x;
+    r0.y = tex2D(LaserNoise, r0.zw*1.15).x;
+    r0.x = r0.x * r0.y;
+    r0.y = 0.5;// saturate(0.5 * 0.0299999993 + 1);
+    r0.x = r0.y * r0.x;
+    r0.x = r0.x * 15 + 0.75;
+    r0.x *= dustNoise;
+    return float4(temp, v*0.0125*noise*r0.x);
 }
 
 technique LaserBeam

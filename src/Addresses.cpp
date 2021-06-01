@@ -58,7 +58,11 @@ void* const Addresses::grcDevice_BeginVertices =
 void* const Addresses::grcDevice_EndVertices =
 	hook::get_absolute_address(hook::get_pattern("48 3B F2 0F 8C ? ? ? ? 33 C9 E8 ? ? ? ? E9 ? ? ? ? 8D 46 02 44 8D 24 7D", 12));
 
-void* const Addresses::grcWorldIdentity = hook::get_pattern("48 8B C4 48 83 EC 68 0F 28 05 ? ? ? ? 0F 28 0D ? ? ? ?");
+void* const Addresses::grcCreateBlendState = hook::get_pattern("40 53 48 81 EC ? ? ? ? 33 D2 48 8B D9 48 8D 4C 24 ? 44 8D 42 78 E8");
+
+void* const Addresses::grcSetBlendState = hook::get_pattern("49 83 C8 FF 83 CA FF E9");
+
+void* const Addresses::grcWorldIdentity = hook::get_pattern("48 8B C4 48 83 EC 68 0F 28 05 ? ? ? ? 0F 28 0D");
 
 void* const Addresses::AddDrawCommandCallback = hook::get_pattern("E8 ? ? ? ? 33 D2 8D 4A 10 E8 ? ? ? ? 48 85 C0 74 04", -0x15);
 

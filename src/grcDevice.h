@@ -4,6 +4,10 @@
 
 namespace rage
 {
+	using grcBlendStateHandle = uint32_t;
+	grcBlendStateHandle grcCreateBlendState(const D3D11_BLEND_DESC& desc);
+	void grcSetBlendState(grcBlendStateHandle blendStateHandle);
+
 	class grcVertexElement
 	{
 	public:

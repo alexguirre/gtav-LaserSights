@@ -3,6 +3,18 @@
 
 namespace rage
 {
+	grcBlendStateHandle grcCreateBlendState(const D3D11_BLEND_DESC& desc)
+	{
+		using Fn = grcBlendStateHandle(*)(const D3D11_BLEND_DESC&, void*);
+		return reinterpret_cast<Fn>(Addresses::grcCreateBlendState)(desc, nullptr);
+	}
+
+	void grcSetBlendState(grcBlendStateHandle blendStateHandle)
+	{
+		using Fn = decltype(&grcSetBlendState);
+		reinterpret_cast<Fn>(Addresses::grcSetBlendState)(blendStateHandle);
+	}
+
 	void grcWorldIdentity()
 	{
 		using Fn = decltype(&grcWorldIdentity);
