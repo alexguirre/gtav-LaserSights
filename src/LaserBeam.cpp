@@ -55,7 +55,7 @@ static void StartShadersFileWatcher()
 
 static struct LaserBeamGlobals
 {
-	rage::grcBlendStateHandle BlendState{};
+	rage::grcBlendStateHandle BlendState{ 0 };
 	rage::grmShader* Shader{ nullptr };
 	struct
 	{
@@ -181,17 +181,20 @@ static void RenderBeams()
 
 static void LoadShaderEffect()
 {
-	spdlog::debug("Creating blend state...");
-	D3D11_BLEND_DESC blendDesc{};
-	blendDesc.AlphaToCoverageEnable = false;
-	blendDesc.IndependentBlendEnable = false;
-	blendDesc.RenderTarget[0] = {
-		true,
-		D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_OP_ADD,	// color
-		D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD,	// alpha
-		D3D11_COLOR_WRITE_ENABLE_ALL
-	};
-	g_LaserBeam.BlendState = rage::grcCreateBlendState(blendDesc);
+	if (g_LaserBeam.BlendState == 0)
+	{
+		spdlog::debug("Creating blend state...");
+		D3D11_BLEND_DESC blendDesc{};
+		blendDesc.AlphaToCoverageEnable = false;
+		blendDesc.IndependentBlendEnable = false;
+		blendDesc.RenderTarget[0] = {
+			true,
+			D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_OP_ADD,	// color
+			D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD,	// alpha
+			D3D11_COLOR_WRITE_ENABLE_ALL
+		};
+		g_LaserBeam.BlendState = rage::grcCreateBlendState(blendDesc);
+	}
 
 	spdlog::debug("Loading shader effect...");
 	if (g_LaserBeam.Shader->m_Effect)
