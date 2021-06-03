@@ -1,5 +1,6 @@
 #include "camBaseCamera.h"
 #include "Addresses.h"
+#include <cstdint>
 
 const rage::Mat34V& camBaseCamera::GetTransform() const
 {

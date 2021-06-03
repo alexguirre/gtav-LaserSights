@@ -1,9 +1,19 @@
 #pragma once
 #include <xmmintrin.h>
-#include <DirectXMath.h>
 
 namespace rage
 {
+	inline __m128 dot(__m128 a, __m128 b)
+	{
+		// aX * bX + aY * bY + aZ * bZ
+		__m128 mul = _mm_mul_ps(a, b);                                  // mul = (aX*bX, aY*bY, aZ*bZ, _) = (dx, dy, dz, _)
+		__m128 yz = _mm_shuffle_ps(mul, mul, _MM_SHUFFLE(0, 0, 2, 1));  // yz = (dy, dz, _, _)
+		__m128 addXY = _mm_add_ps(mul, yz);                             // addXY = (dx, dy, dz, _) + (dy, _, _, _) = (dx+dy, _, _, _)
+		__m128 z = _mm_shuffle_ps(yz, yz, _MM_SHUFFLE(0, 0, 0, 1));     // z = (dz, _, _, _)
+		__m128 addXYZ = _mm_add_ss(addXY, z);                           // addXYZ = (dx+dy, _, _, _) + (dz, _, _, _) = (dx+dy+dz, _, _, _)
+		return _mm_shuffle_ps(addXYZ, addXYZ, _MM_SHUFFLE(0, 0, 0, 0)); // return (dx+dy+dz, dx+dy+dz, dx+dy+dz, dx+dy+dz)
+	}
+
 	struct alignas(16) Vec3V
 	{
 		union
@@ -39,9 +49,9 @@ namespace rage
 			return *this;
 		}
 
-		inline float Length() const { return _mm_cvtss_f32(_mm_sqrt_ss(_mm_dp_ps(v, v, 0b01110001))); }
-		inline float LengthSquared() const { return _mm_cvtss_f32(_mm_dp_ps(v, v, 0b01110001)); }
-		inline Vec3V Normalized() const { return _mm_mul_ps(v, _mm_rsqrt_ps(_mm_dp_ps(v, v, 0b01111111))); }
+		inline float Length() const { return _mm_cvtss_f32(_mm_sqrt_ss(dot(v, v))); }
+		inline float LengthSquared() const { return _mm_cvtss_f32(dot(v, v)); }
+		inline Vec3V Normalized() const { return _mm_mul_ps(v, _mm_rsqrt_ps(dot(v, v))); }
 		
 		inline Vec3V Cross(const Vec3V& b) const
 		{
@@ -54,7 +64,7 @@ namespace rage
 			return _mm_sub_ps(t, u);
 		}
 
-		inline float Dot(const Vec3V& b) const { return _mm_cvtss_f32(_mm_dp_ps(v, b.v, 0b01110001)); }
+		inline float Dot(const Vec3V& b) const { return _mm_cvtss_f32(dot(v, b.v)); }
 
 		inline void Normalize() { v = this->Normalized().v; }
 
@@ -111,9 +121,9 @@ namespace rage
 			return *this;
 		}
 
-		inline float Length() const { return _mm_cvtss_f32(_mm_sqrt_ss(_mm_dp_ps(v, v, 0b01110001))); }
-		inline float LengthSquared() const { return _mm_cvtss_f32(_mm_dp_ps(v, v, 0b01110001)); }
-		inline Vec4V Normalized() const { return _mm_mul_ps(v, _mm_rsqrt_ps(_mm_dp_ps(v, v, 0b01111111))); }
+		inline float Length() const { return _mm_cvtss_f32(_mm_sqrt_ss(dot(v, v))); }
+		inline float LengthSquared() const { return _mm_cvtss_f32(dot(v, v)); }
+		inline Vec4V Normalized() const { return _mm_mul_ps(v, _mm_rsqrt_ps(dot(v, v))); }
 
 		inline void Normalize() { v = this->Normalized().v; }
 
