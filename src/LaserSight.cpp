@@ -11,6 +11,74 @@
 #include "WorldProbe.h"
 #include "CTaskAimGun.h"
 #include "Replay.h"
+#include <filesystem>
+
+static struct Config
+{
+	uint32_t ShapeTestFlags1 = 0x100;
+	uint32_t ShapeTestFlags2 = 0xE1134C2;
+} g_Config;
+
+static constexpr bool ConfigHotReloadEnabled{ true };
+
+static void LoadConfig(const char* path)
+{
+	spdlog::debug("Loading config {}", path);
+
+	std::string strShapeTestFlags1(512, '\0'), strShapeTestFlags2(512, '\0');
+	strShapeTestFlags1.resize(GetPrivateProfileString("Config", "ShapeTestFlags1", "0", strShapeTestFlags1.data(), strShapeTestFlags1.size(), path));
+	strShapeTestFlags1.resize(GetPrivateProfileString("Config", "ShapeTestFlags2", "0", strShapeTestFlags2.data(), strShapeTestFlags2.size(), path));
+	spdlog::debug(" > strShapeTestFlags1 = {}", strShapeTestFlags1);
+	spdlog::debug(" > strShapeTestFlags2 = {}", strShapeTestFlags2);
+
+	g_Config.ShapeTestFlags1 = std::stoul(strShapeTestFlags1, nullptr, 0);
+	g_Config.ShapeTestFlags2 = std::stoul(strShapeTestFlags2, nullptr, 0);
+	spdlog::debug(" > g_Config.ShapeTestFlags1 = 0x{:X}", g_Config.ShapeTestFlags1);
+	spdlog::debug(" > g_Config.ShapeTestFlags2 = 0x{:X}", g_Config.ShapeTestFlags2);
+}
+
+static DWORD ConfigFileWatcher(LPVOID)
+{
+	char dirPath[MAX_PATH], filePath[MAX_PATH];
+	GetFullPathName(".\\", MAX_PATH, dirPath, NULL);
+	GetFullPathName(".\\LaserSightWeaponComponent.ini", MAX_PATH, filePath, NULL);
+	HANDLE handle = FindFirstChangeNotification(dirPath, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE);
+	if (handle == INVALID_HANDLE_VALUE)
+	{
+		spdlog::debug("Failed to create config file watcher");
+		return 0;
+	}
+
+	auto prevWriteTime = std::filesystem::last_write_time(filePath);
+
+	while (true)
+	{
+		switch (WaitForSingleObject(handle, INFINITE))
+		{
+		case WAIT_OBJECT_0:
+			const auto newWriteTime = std::filesystem::last_write_time(filePath);
+			if (prevWriteTime != newWriteTime)
+			{
+				LoadConfig(filePath);
+				prevWriteTime = newWriteTime;
+			}
+
+			if (!FindNextChangeNotification(handle))
+			{
+				spdlog::debug("FindNextChangeNotification failed");
+				FindCloseChangeNotification(handle);
+				return 0;
+			}
+			break;
+		}
+	}
+}
+
+static void StartConfigFileWatcher()
+{
+	HANDLE h = CreateThread(NULL, 0, &ConfigFileWatcher, NULL, 0, NULL);
+	CloseHandle(h);
+}
 
 static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end, uint32_t color)
 {
@@ -157,16 +225,16 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		}
 
 		{
-			static WorldProbe::CShapeTestResults* results = new WorldProbe::CShapeTestResults(1);
+			static WorldProbe::CShapeTestResults results{ 4 };
 
-			results->AbortTest();
+			results.AbortTest();
 			WorldProbe::CShapeTestProbeDesc desc;
 			const rage::fwEntity* excludeEntities[]{ This->m_ComponentObject, GetWeaponObject(This) };
 			desc.SetExcludeEntities(excludeEntities, ARRAYSIZE(excludeEntities), 0);
-			desc.SetResultsStructure(results);
+			desc.SetResultsStructure(&results);
 			// TODO: find more appropriate shapetest flags
-			desc.m_Flags1 = 256; // flags copied from game code
-			desc.m_Flags2 = 0xE1134C2;
+			desc.m_Flags1 = g_Config.ShapeTestFlags1;
+			desc.m_Flags2 = g_Config.ShapeTestFlags2;
 			desc.m_Start = startPos;
 			desc.m_End = endPos;
 			desc.m_84C = 8;
@@ -178,18 +246,18 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 			WorldProbe::GetShapeTestManager()->SubmitTest(desc, false);
 
-			if (results->m_State == 4 && results->m_HitCount > 0)
+			if (results.m_State == 4 && results.m_HitCount > 0)
 			{
-				for (int i = 0; i < results->m_HitCount; i++)
+				for (int i = 0; i < results.m_HitCount; i++)
 				{
-					WorldProbe::CShapeTestHit* hit = &results->m_Hits[i];
+					WorldProbe::CShapeTestHit* hit = &results.m_Hits[i];
 
 					endPos = hit->m_Position;
 
 					CCoronas::Instance()->Draw(hit->m_Position, info->CoronaSize * 0.25f, info->CoronaColor, info->CoronaIntensity * 1.25f, 100.0f, hit->m_SurfaceNormal, 1.0f, 65.0f, 85.0f, 3);
 				}
 
-				results->AbortTest();
+				results.AbortTest();
 			}
 		}
 
@@ -236,4 +304,6 @@ void LaserSight::InstallHooks()
 	vtable[3] = CWeaponComponentLaserSight_Process_detour;
 	vtable[4] = CWeaponComponentLaserSight_ProcessPostPreRender_detour;
 	vtable[5] = CWeaponComponentLaserSight_ApplyAccuracyModifier_detour;
+
+	StartConfigFileWatcher();
 }
