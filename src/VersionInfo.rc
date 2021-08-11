@@ -1,0 +1,46 @@
+#define APSTUDIO_READONLY_SYMBOLS
+#include "winres.h"
+#undef APSTUDIO_READONLY_SYMBOLS
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+#include "VersionInfo.h"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION    LASERSIGHTS_VERSION_MAJOR, LASERSIGHTS_VERSION_MINOR, LASERSIGHTS_VERSION_PATCH, 0
+ PRODUCTVERSION LASERSIGHTS_VERSION_MAJOR, LASERSIGHTS_VERSION_MINOR, LASERSIGHTS_VERSION_PATCH, 0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName",      "alexguirre"
+            VALUE "FileDescription",  "Adds support for weapon laser sights in Grand Theft Auto V"
+            VALUE "FileVersion",      LASERSIGHTS_VERSION_STRING
+            VALUE "InternalName",     LASERSIGHTS_FILENAME ".asi"
+            VALUE "LegalCopyright",   "Copyright (C) 2021 alexguirre"
+            VALUE "OriginalFilename", LASERSIGHTS_FILENAME ".asi"
+            VALUE "ProductName",      "gtav-LaserSights"
+            VALUE "ProductVersion",   LASERSIGHTS_VERSION_STRING
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+/////////////////////////////////////////////////////////////////////////////

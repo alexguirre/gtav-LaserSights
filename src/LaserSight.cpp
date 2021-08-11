@@ -12,6 +12,7 @@
 #include "CTaskAimGun.h"
 #include "Replay.h"
 #include <filesystem>
+#include "VersionInfo.h"
 
 static struct Config
 {
@@ -48,7 +49,7 @@ static DWORD ConfigFileWatcher(LPVOID)
 {
 	char dirPath[MAX_PATH], filePath[MAX_PATH];
 	GetFullPathName(".\\", MAX_PATH, dirPath, NULL);
-	GetFullPathName(".\\LaserSightWeaponComponent.ini", MAX_PATH, filePath, NULL);
+	GetFullPathName(".\\" LASERSIGHTS_FILENAME ".ini", MAX_PATH, filePath, NULL);
 	HANDLE handle = FindFirstChangeNotification(dirPath, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE);
 	if (handle == INVALID_HANDLE_VALUE)
 	{

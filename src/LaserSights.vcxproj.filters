@@ -108,6 +108,7 @@
     <ClInclude Include="CReplay.h">
       <Filter>five</Filter>
     </ClInclude>
+    <ClInclude Include="VersionInfo.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dependencies">
@@ -131,5 +132,8 @@
     <Filter Include="rage\parser">
       <UniqueIdentifier>{1149294a-b1c1-47c0-9ef9-9e6ba54a25a8}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="VersionInfo.rc" />
   </ItemGroup>
 </Project>
