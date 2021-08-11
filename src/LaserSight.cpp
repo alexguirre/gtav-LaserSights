@@ -19,7 +19,14 @@ static struct Config
 	uint32_t ShapeTestFlags2 = 0xE1134C2;
 } g_Config;
 
-static constexpr bool ConfigHotReloadEnabled{ true };
+static constexpr bool ConfigHotReloadEnabled
+{
+#if _DEBUG
+	true
+#else
+	false
+#endif
+};
 
 static void LoadConfig(const char* path)
 {
@@ -305,5 +312,8 @@ void LaserSight::InstallHooks()
 	vtable[4] = CWeaponComponentLaserSight_ProcessPostPreRender_detour;
 	vtable[5] = CWeaponComponentLaserSight_ApplyAccuracyModifier_detour;
 
-	StartConfigFileWatcher();
+	if constexpr (ConfigHotReloadEnabled)
+	{
+		StartConfigFileWatcher();
+	}
 }

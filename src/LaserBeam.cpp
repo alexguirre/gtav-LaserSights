@@ -16,7 +16,14 @@
 #include <iterator>
 #include <fileapi.h>
 
-static constexpr bool ShaderHotReloadEnabled{ true };
+static constexpr bool ShaderHotReloadEnabled
+{
+#if _DEBUG
+	true
+#else
+	false
+#endif
+};
 static bool ReloadShaders{ false };
 
 static DWORD ShadersFileWatcher(LPVOID)
@@ -147,7 +154,7 @@ static void RenderBeam(const BeamDrawCall& drawCall)
 		{ length, 0.0f },
 	};
 	
-	void* buffer = rage::grcDevice::BeginVertices(rage::grcDrawMode::TriangleStrip, 4, g_LaserBeam.VertexDecls.LaserBeam->m_VertexSize);
+	void* buffer = rage::grcDevice::BeginVertices(rage::grcDrawMode::TriangleStrip, VertexCount, g_LaserBeam.VertexDecls.LaserBeam->m_VertexSize);
 	for (size_t i = 0; i < VertexCount; i++)
 	{
 		SetLaserBeamVertex(buffer, i, p[i], drawCall.m_Color, uv[i]);
