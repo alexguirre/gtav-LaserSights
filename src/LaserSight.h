@@ -3,6 +3,6 @@
 class LaserSight
 {
 public:
-	static void InstallHooks();
+	static bool InstallHooks();
 };
 

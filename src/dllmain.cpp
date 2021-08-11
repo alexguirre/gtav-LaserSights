@@ -15,12 +15,21 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 		spdlog::set_default_logger(spdlog::basic_logger_mt("file_logger", LASERSIGHTS_FILENAME ".log"));
 		spdlog::flush_every(std::chrono::seconds(30));
 		spdlog::set_level(spdlog::level::debug);
-		MH_Initialize();
-		ExtendedWeaponComponentLaserSightInfo::InstallHooks();
-		LaserBeam::InstallHooks();
-		LaserSight::InstallHooks();
-		Replay::InstallHooks();
-		MH_EnableHook(MH_ALL_HOOKS);
+
+#define RETURN_IF_FAILED(success, message)   \
+		if (!(success)) {                 \
+			spdlog::error((message)); \
+			return FALSE;           \
+		}
+
+		RETURN_IF_FAILED(MH_Initialize() == MH_OK,                              "Failed to initialize MinHook");
+		RETURN_IF_FAILED(ExtendedWeaponComponentLaserSightInfo::InstallHooks(), "Failed to install ExtendedWeaponComponentLaserSightInfo hooks");
+		RETURN_IF_FAILED(LaserBeam::InstallHooks(),                             "Failed to install LaserBeam hooks");
+		RETURN_IF_FAILED(LaserSight::InstallHooks(),                            "Failed to install LaserSight hooks");
+		RETURN_IF_FAILED(Replay::InstallHooks(),                                "Failed to install Replay hooks");
+		RETURN_IF_FAILED(MH_EnableHook(MH_ALL_HOOKS) == MH_OK,                  "Failed to enable hooks");
+
+#undef RETURN_IF_FAILED
 	}
 	else if (reason == DLL_PROCESS_DETACH)
 	{

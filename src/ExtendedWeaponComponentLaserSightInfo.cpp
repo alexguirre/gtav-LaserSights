@@ -99,7 +99,7 @@ static void CWeaponComponentLaserSightInfo_parser_Register_detour()
 	newLaserSightBoneData->m_Structure = origLaserSightBoneData->m_Structure;
 }
 
-void ExtendedWeaponComponentLaserSightInfo::InstallHooks()
+bool ExtendedWeaponComponentLaserSightInfo::InstallHooks()
 {
 	rage::parStructureStaticData* laserSightInfoData = reinterpret_cast<rage::parStructureStaticData*>(Addresses::CWeaponComponentLaserSightInfo_parser_Data);
 
@@ -113,5 +113,7 @@ void ExtendedWeaponComponentLaserSightInfo::InstallHooks()
 
 	*reinterpret_cast<uint32_t*>(Addresses::CWeaponComponentLaserSightInfo_parser_Register_SizeOfConstant) = sizeof(ExtendedWeaponComponentLaserSightInfo);
 
-	MH_CreateHook(Addresses::CWeaponComponentLaserSightInfo_parser_Register, CWeaponComponentLaserSightInfo_parser_Register_detour, reinterpret_cast<void**>(&CWeaponComponentLaserSightInfo_parser_Register_orig));
+	const auto res = MH_CreateHook(Addresses::CWeaponComponentLaserSightInfo_parser_Register,
+						CWeaponComponentLaserSightInfo_parser_Register_detour, reinterpret_cast<void**>(&CWeaponComponentLaserSightInfo_parser_Register_orig));
+	return res == MH_OK;
 }

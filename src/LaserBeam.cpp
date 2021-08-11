@@ -332,7 +332,7 @@ static void sub_D63908_detour(uint64_t a1)
 	return sub_D63908_orig(a1);
 }
 
-void LaserBeam::InstallHooks()
+bool LaserBeam::InstallHooks()
 {
 	void* gtaRenderThreadGameInterface =
 		hook::get_absolute_address(
@@ -345,8 +345,10 @@ void LaserBeam::InstallHooks()
 
 	gtaRenderThreadGameInterfaceVTable[5] = CGtaRenderThreadGameInterface_RenderThreadInit_detour;
 
-	MH_CreateHook(hook::get_pattern("40 53 48 83 EC 20 8B D9 F6 C1 01 0F 84 ? ? ? ? E8 ? ? ? ? F6 80 ? ? ? ? ?"),
-		sub_D63908_detour, reinterpret_cast<void**>(&sub_D63908_orig));
+	const auto res = MH_CreateHook(hook::get_pattern("40 53 48 83 EC 20 8B D9 F6 C1 01 0F 84 ? ? ? ? E8 ? ? ? ? F6 80 ? ? ? ? ?"),
+						sub_D63908_detour, reinterpret_cast<void**>(&sub_D63908_orig));
+
+	return res == MH_OK;
 }
 
 void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector, const rage::Vec3V& color)

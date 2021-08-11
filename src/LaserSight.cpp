@@ -301,7 +301,7 @@ static void CWeaponComponentLaserSight_ApplyAccuracyModifier_detour(CWeaponCompo
 	CWeaponComponentLaserSight_ApplyAccuracyModifier_orig(This, accuracyStruct);
 }
 
-void LaserSight::InstallHooks()
+bool LaserSight::InstallHooks()
 {
 	void** vtable = hook::get_absolute_address<void*>(hook::get_pattern("48 8D 05 ? ? ? ? C7 43 ? ? ? ? ? C6 43 50 00", 3));
 
@@ -317,4 +317,6 @@ void LaserSight::InstallHooks()
 	{
 		StartConfigFileWatcher();
 	}
+
+	return true;
 }

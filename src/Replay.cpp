@@ -108,10 +108,11 @@ static void HookPacketWeaponFlashLightReplayHandler()
 	memcpy(addr, stubCode, stubCodeSize);
 }
 
-void Replay::InstallHooks()
+bool Replay::InstallHooks()
 {
 	AllowWeaponComponentLaserSightRecording();
 	HookPacketWeaponFlashLightReplayHandler();
+	return true;
 }
 
 void Replay::RecordLaserSightState(rage::fwEntity* weaponObject, bool isOn)
