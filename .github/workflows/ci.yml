@@ -1,21 +1,29 @@
 name: CI
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
-
+    name: Build
     runs-on: windows-latest
+    strategy:
+      matrix:
+        config: [Debug, Release]
 
     steps:
       - uses: actions/checkout@v1
         with:
           submodules: true
-      - name: Build Debug
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.0.2
+
+      - name: Build
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          msbuild src/LaserSightWeaponComponent.sln -m -p:Configuration=Debug
-      - name: Build Release
-        run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          msbuild src/LaserSightWeaponComponent.sln -m -p:Configuration=Release
+          msbuild src/LaserSights.sln -m -p:Configuration=${{ matrix.config }} -p:Platform=x64
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: gtav-LaserSights-${{ matrix.config }}
+          path: bin/${{ matrix.config }}

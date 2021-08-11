@@ -132,8 +132,27 @@
     <Filter Include="rage\parser">
       <UniqueIdentifier>{1149294a-b1c1-47c0-9ef9-9e6ba54a25a8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{29c3d6d6-0024-4323-ae21-8e3ab6a27c02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders\lib">
+      <UniqueIdentifier>{c117d7fc-1d66-47b7-8fbd-da792c4ba082}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VersionInfo.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shaders\lib\rage_shared.fx">
+      <Filter>shaders\lib</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\laserbeam.fx">
+      <Filter>shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\laserbeam.fxc">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
