@@ -15,7 +15,7 @@ namespace WorldProbe
 	void CShapeTestResults::AbortTest()
 	{
 		using Fn = void(*)(CShapeTestResults*);
-		reinterpret_cast<Fn>(Addresses::WorldProbe_CShapeTestResults_AbortTest)(this);
+		reinterpret_cast<Fn>(Addresses.WorldProbe_CShapeTestResults_AbortTest)(this);
 	}
 
 	CShapeTestDesc::CShapeTestDesc()
@@ -43,13 +43,13 @@ namespace WorldProbe
 	void CShapeTestDesc::SetResultsStructure(CShapeTestResults* results)
 	{
 		using Fn = void(*)(CShapeTestDesc*, CShapeTestResults*);
-		reinterpret_cast<Fn>(Addresses::WorldProbe_CShapeTestDesc_SetResultsStructure)(this, results);
+		reinterpret_cast<Fn>(Addresses.WorldProbe_CShapeTestDesc_SetResultsStructure)(this, results);
 	}
 
 	void CShapeTestDesc::SetExcludeEntities(const rage::fwEntity* const* entities, int entityCount, uint8_t flags)
 	{
 		using Fn = void(*)(CShapeTestDesc*, const rage::fwEntity* const*, int, uint8_t);
-		reinterpret_cast<Fn>(Addresses::WorldProbe_CShapeTestDesc_SetExcludeEntities)(this, entities, entityCount, flags);
+		reinterpret_cast<Fn>(Addresses.WorldProbe_CShapeTestDesc_SetExcludeEntities)(this, entities, entityCount, flags);
 	}
 
 	CShapeTestProbeDesc::CShapeTestProbeDesc()
@@ -60,12 +60,12 @@ namespace WorldProbe
 	bool CShapeTestManager::SubmitTest(CShapeTestDesc& desc, bool unk)
 	{
 		using Fn = bool(*)(CShapeTestManager*, CShapeTestDesc&, bool);
-		return reinterpret_cast<Fn>(Addresses::WorldProbe_CShapeTestManager_SubmitTest)(this, desc, unk);
+		return reinterpret_cast<Fn>(Addresses.WorldProbe_CShapeTestManager_SubmitTest)(this, desc, unk);
 	}
 
 	CShapeTestManager* GetShapeTestManager()
 	{
 		using Fn = decltype(&GetShapeTestManager);
-		return reinterpret_cast<Fn>(Addresses::WorldProbe_GetShapeTestManager)();
+		return reinterpret_cast<Fn>(Addresses.WorldProbe_GetShapeTestManager)();
 	}
 }

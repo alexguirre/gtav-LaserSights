@@ -12,6 +12,6 @@ namespace rage
 	aiTask* aiTaskTree::FindTaskByTypeActive(uint32_t taskType)
 	{
 		using Fn = aiTask*(*)(aiTaskTree*, uint32_t);
-		return reinterpret_cast<Fn>(Addresses::aiTaskTree_FindTaskByTypeActive)(this, taskType);
+		return reinterpret_cast<Fn>(Addresses.aiTaskTree_FindTaskByTypeActive)(this, taskType);
 	}	
 }

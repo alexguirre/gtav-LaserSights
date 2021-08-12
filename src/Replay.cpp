@@ -1,5 +1,5 @@
 #include "Replay.h"
-#include <Hooking.Patterns.h>
+#include "Addresses.h"
 #include <jitasm.h>
 #include <cstdint>
 #include "CReplay.h"
@@ -10,8 +10,6 @@ static void AllowWeaponComponentLaserSightRecording()
 {
 	// game only records CWeaponComponent creation if it is a flashlight or a scope,
 	// patch it to also do it if it is a lasersight
-	auto addr = hook::get_pattern("83 F8 02 74 16 48 8B 86 ? ? ? ? 48 8B 48 08");
-
 	struct : jitasm::Frontend
 	{
 		void InternalMain() override
@@ -34,6 +32,7 @@ static void AllowWeaponComponentLaserSightRecording()
 	auto stubCodeSize = stub.GetCodeSize();
 	assert(stubCodeSize <= StubMaxSize);
 
+	auto addr = Addresses.CPacketObjectCreateBase_ctor_weaponComponentClassIdCheckHookLocation;
 	memset(addr, 0x90, StubMaxSize); // nop
 	memcpy(addr, stubCode, stubCodeSize);
 }
@@ -46,7 +45,7 @@ static void HookPacketWeaponFlashLightReplayHandler()
 	// re-use the CPacketWeaponFlashLight as the laser sight packet
 	// in its replay handler check if IsLaserSightStatePacketFlag is set to decide whether to run the original handler or our custom handler.
 
-	auto addr = hook::get_pattern<uint8_t>("4C 8B 82 ? ? ? ? 4D 85 C0 74 33 8A 51 1D 41 8A 48 49");
+	auto addr = (uint8_t*)Addresses.CPacketWeaponFlashLight_ReplayHandler_hookLocation;
 	static const int32_t CWeapon_ComponentFlashLightOffset = *reinterpret_cast<int32_t*>(addr + 3);
 	static const int32_t CWeapon_ComponentLaserSightOffset = CWeapon_ComponentFlashLightOffset + 8;
 

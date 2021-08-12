@@ -3,7 +3,7 @@
 
 bool CReplay::IsRecordingActive()
 {
-	return reinterpret_cast<bool(*)()>(Addresses::CReplay_IsRecordingActive)();
+	return reinterpret_cast<bool(*)()>(Addresses.CReplay_IsRecordingActive)();
 }
 
 CPacketWeaponFlashLight::CPacketWeaponFlashLight()
@@ -27,5 +27,5 @@ CPacketWeaponFlashLight::CPacketWeaponFlashLight()
 
 void CPacketWeaponFlashLight::AddToRecording(CEntity* const* entities, bool dontAddToMonitorBuffers, bool forceAddPacket)
 {
-	reinterpret_cast<void(*)(CPacketWeaponFlashLight*, CEntity* const*, bool, bool)>(Addresses::CPacketWeaponFlashLight_AddToRecording)(this, entities, dontAddToMonitorBuffers, forceAddPacket);
+	reinterpret_cast<void(*)(CPacketWeaponFlashLight*, CEntity* const*, bool, bool)>(Addresses.CPacketWeaponFlashLight_AddToRecording)(this, entities, dontAddToMonitorBuffers, forceAddPacket);
 }

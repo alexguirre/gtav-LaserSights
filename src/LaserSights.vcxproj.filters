@@ -65,7 +65,6 @@
       <Filter>rage</Filter>
     </ClInclude>
     <ClInclude Include="Addresses.h" />
-    <ClInclude Include="Hooking.Helper.h" />
     <ClInclude Include="CCoronas.h">
       <Filter>five</Filter>
     </ClInclude>

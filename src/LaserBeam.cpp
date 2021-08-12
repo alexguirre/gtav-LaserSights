@@ -3,8 +3,6 @@
 #include <mutex>
 #include <cstddef>
 #include <cstdint>
-#include <Hooking.Patterns.h>
-#include "Hooking.Helper.h"
 #include <spdlog/spdlog.h>
 #include "grmShaderFactory.h"
 #include "fiAssetManager.h"
@@ -97,7 +95,7 @@ static size_t g_BeamDrawCallCountRender;
 static rage::grcTexture* GetTextureFromGraphicsTxd(uint32_t nameHash)
 {
 	using Fn = rage::grcTexture* (*)(uint32_t);
-	return reinterpret_cast<Fn>(Addresses::GetTextureFromGraphicsTxd)(nameHash);
+	return reinterpret_cast<Fn>(Addresses.GetTextureFromGraphicsTxd)(nameHash);
 }
 
 static void SetLaserBeamVertex(
@@ -121,7 +119,7 @@ static void UpdateTime()
 	{
 		uint32_t totalTimeMs;
 		// ...
-	}* gameTime = reinterpret_cast<fwTimeSet*>(Addresses::fwTimer_sm_gameTime);
+	}* gameTime = reinterpret_cast<fwTimeSet*>(Addresses.fwTimer_sm_gameTime);
 
 	float time = gameTime->totalTimeMs * 0.001f;
 	g_LaserBeam.Shader->m_Effect->SetVarCommon(g_LaserBeam.Shader, g_LaserBeam.Vars.gTime, &time, sizeof(float), 1);
@@ -315,7 +313,7 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 static void AddDrawCommandCallback(void(*cb)())
 {
 	using Fn = decltype(&AddDrawCommandCallback);
-	reinterpret_cast<Fn>(Addresses::AddDrawCommandCallback)(cb);
+	reinterpret_cast<Fn>(Addresses.AddDrawCommandCallback)(cb);
 }
 
 static void(*sub_D63908_orig)(uint64_t a1);
@@ -334,19 +332,13 @@ static void sub_D63908_detour(uint64_t a1)
 
 bool LaserBeam::InstallHooks()
 {
-	void* gtaRenderThreadGameInterface =
-		hook::get_absolute_address(
-			hook::get_absolute_address<char>(hook::get_pattern("E8 ? ? ? ? E8 ? ? ? ? E8 ? ? ? ? 48 8B 5C 24 ? 48 83 C4 20 5F E9 ? ? ? ?", 11)) + 3
-			);
-	void** gtaRenderThreadGameInterfaceVTable = *reinterpret_cast<void***>(gtaRenderThreadGameInterface);
+	void** gtaRenderThreadGameInterfaceVTable = (void**)Addresses.CGtaRenderThreadGameInterface_vftable;
 
-	CGtaRenderThreadGameInterface_RenderThreadInit_orig =
-		reinterpret_cast<decltype(CGtaRenderThreadGameInterface_RenderThreadInit_orig)>(gtaRenderThreadGameInterfaceVTable[5]);
+	CGtaRenderThreadGameInterface_RenderThreadInit_orig = (decltype(CGtaRenderThreadGameInterface_RenderThreadInit_orig))gtaRenderThreadGameInterfaceVTable[5];
 
 	gtaRenderThreadGameInterfaceVTable[5] = CGtaRenderThreadGameInterface_RenderThreadInit_detour;
 
-	const auto res = MH_CreateHook(hook::get_pattern("40 53 48 83 EC 20 8B D9 F6 C1 01 0F 84 ? ? ? ? E8 ? ? ? ? F6 80 ? ? ? ? ?"),
-						sub_D63908_detour, reinterpret_cast<void**>(&sub_D63908_orig));
+	const auto res = MH_CreateHook(Addresses.sub_D63908, sub_D63908_detour, (void**)&sub_D63908_orig);
 
 	return res == MH_OK;
 }

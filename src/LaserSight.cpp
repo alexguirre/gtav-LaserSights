@@ -1,9 +1,7 @@
 #include "LaserSight.h"
-#include <Hooking.Patterns.h>
 #include "CWeaponComponentLaserSight.h"
 #include "CCoronas.h"
 #include <spdlog/spdlog.h>
-#include "Hooking.Helper.h"
 #include "Addresses.h"
 #include "LaserBeam.h"
 #include "ExtendedWeaponComponentLaserSightInfo.h"
@@ -90,7 +88,7 @@ static void StartConfigFileWatcher()
 
 static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end, uint32_t color)
 {
-	reinterpret_cast<decltype(&CScriptIM_DrawLine)>(Addresses::CScriptIM_DrawLine)(start, end, color);
+	reinterpret_cast<decltype(&CScriptIM_DrawLine)>(Addresses.CScriptIM_DrawLine)(start, end, color);
 }
 
 static rage::aiTaskTree* GetPedTaskTree(rage::fwEntity* ped)
@@ -114,22 +112,22 @@ static bool IsContextPressed()
 	class ioValue;
 	constexpr int INPUT_CONTEXT{ 51 };
 
-	CControl* const c = ((CControl * (*)(bool))Addresses::CControlMgr_GetDefaultControl)(true);
-	ioValue* const v = ((ioValue * (*)(CControl*, int))Addresses::CControlMgr_GetIoValue)(c, INPUT_CONTEXT);
+	CControl* const c = ((CControl * (*)(bool))Addresses.CControlMgr_GetDefaultControl)(true);
+	ioValue* const v = ((ioValue * (*)(CControl*, int))Addresses.CControlMgr_GetIoValue)(c, INPUT_CONTEXT);
 
 	constexpr struct ioValue_ReadOptions { float f1; uint32_t f2; } Options{ 0.0f, 1 };
 	constexpr float Threshold{ 0.5f };
-	return ((bool(*)(ioValue*, float, const ioValue_ReadOptions&))Addresses::ioValue_IsPressed)(v, Threshold, Options);
+	return ((bool(*)(ioValue*, float, const ioValue_ReadOptions&))Addresses.ioValue_IsPressed)(v, Threshold, Options);
 }
 
 static bool IsNightVisionEnabled()
 {
-	return *reinterpret_cast<bool*>(Addresses::IsNightVisionEnabled);
+	return *reinterpret_cast<bool*>(Addresses.IsNightVisionEnabled);
 }
 
 static void PlayToggleSound(void* weapon, bool isOn)
 {
-	reinterpret_cast<void(*)(void*, void*, bool)>(Addresses::PlayWeaponFlashLightToggleSound)(Addresses::audWeaponAudioEntity_Instance, weapon, isOn);
+	reinterpret_cast<void(*)(void*, void*, bool)>(Addresses.PlayWeaponFlashLightToggleSound)(Addresses.audWeaponAudioEntity_Instance, weapon, isOn);
 }
 
 static bool IsLaserVisible(CWeaponComponentLaserSight* sight)
@@ -303,11 +301,11 @@ static void CWeaponComponentLaserSight_ApplyAccuracyModifier_detour(CWeaponCompo
 
 bool LaserSight::InstallHooks()
 {
-	void** vtable = hook::get_absolute_address<void*>(hook::get_pattern("48 8D 05 ? ? ? ? C7 43 ? ? ? ? ? C6 43 50 00", 3));
+	void** vtable = (void**)Addresses.CWeaponComponentLaserSight_vftable;
 
-	CWeaponComponentLaserSight_Process_orig = reinterpret_cast<decltype(CWeaponComponentLaserSight_Process_orig)>(vtable[3]);
-	CWeaponComponentLaserSight_ProcessPostPreRender_orig = reinterpret_cast<decltype(CWeaponComponentLaserSight_ProcessPostPreRender_orig)>(vtable[4]);
-	CWeaponComponentLaserSight_ApplyAccuracyModifier_orig = reinterpret_cast<decltype(CWeaponComponentLaserSight_ApplyAccuracyModifier_orig)>(vtable[5]);
+	CWeaponComponentLaserSight_Process_orig = (decltype(CWeaponComponentLaserSight_Process_orig))vtable[3];
+	CWeaponComponentLaserSight_ProcessPostPreRender_orig = (decltype(CWeaponComponentLaserSight_ProcessPostPreRender_orig))vtable[4];
+	CWeaponComponentLaserSight_ApplyAccuracyModifier_orig = (decltype(CWeaponComponentLaserSight_ApplyAccuracyModifier_orig))vtable[5];
 
 	vtable[3] = CWeaponComponentLaserSight_Process_detour;
 	vtable[4] = CWeaponComponentLaserSight_ProcessPostPreRender_detour;

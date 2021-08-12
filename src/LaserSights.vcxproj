@@ -134,7 +134,6 @@
     <ClInclude Include="grcDevice.h" />
     <ClInclude Include="grmShaderFactory.h" />
     <ClInclude Include="Hashing.h" />
-    <ClInclude Include="Hooking.Helper.h" />
     <ClInclude Include="LaserBeam.h" />
     <ClInclude Include="LaserSight.h" />
     <ClInclude Include="Matrix.h" />

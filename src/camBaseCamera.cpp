@@ -10,5 +10,5 @@ const rage::Mat34V& camBaseCamera::GetTransform() const
 
 camBaseCamera* camBaseCamera::GetCurrentCamera()
 {
-	return *reinterpret_cast<camBaseCamera**>(Addresses::CurrentCamera);
+	return *reinterpret_cast<camBaseCamera**>(Addresses.CurrentCamera);
 }

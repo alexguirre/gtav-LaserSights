@@ -101,7 +101,7 @@ static void CWeaponComponentLaserSightInfo_parser_Register_detour()
 
 bool ExtendedWeaponComponentLaserSightInfo::InstallHooks()
 {
-	rage::parStructureStaticData* laserSightInfoData = reinterpret_cast<rage::parStructureStaticData*>(Addresses::CWeaponComponentLaserSightInfo_parser_Data);
+	rage::parStructureStaticData* laserSightInfoData = reinterpret_cast<rage::parStructureStaticData*>(Addresses.CWeaponComponentLaserSightInfo_parser_Data);
 
 	assert(laserSightInfoData->m_Structure == nullptr); // ensure the parStructure is not initialized yet
 
@@ -111,9 +111,9 @@ bool ExtendedWeaponComponentLaserSightInfo::InstallHooks()
 	laserSightInfoData->m_MemberData = MemberData;
 	laserSightInfoData->m_MemberOffsets = MemberOffsets;
 
-	*reinterpret_cast<uint32_t*>(Addresses::CWeaponComponentLaserSightInfo_parser_Register_SizeOfConstant) = sizeof(ExtendedWeaponComponentLaserSightInfo);
+	*reinterpret_cast<uint32_t*>(Addresses.CWeaponComponentLaserSightInfo_parser_Register_SizeOfConstant) = sizeof(ExtendedWeaponComponentLaserSightInfo);
 
-	const auto res = MH_CreateHook(Addresses::CWeaponComponentLaserSightInfo_parser_Register,
+	const auto res = MH_CreateHook(Addresses.CWeaponComponentLaserSightInfo_parser_Register,
 						CWeaponComponentLaserSightInfo_parser_Register_detour, reinterpret_cast<void**>(&CWeaponComponentLaserSightInfo_parser_Register_orig));
 	return res == MH_OK;
 }

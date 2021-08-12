@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include "Addresses.h"
 #include "LaserBeam.h"
 #include "LaserSight.h"
 #include "ExtendedWeaponComponentLaserSightInfo.h"
@@ -16,12 +17,20 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 		spdlog::flush_every(std::chrono::seconds(30));
 		spdlog::set_level(spdlog::level::debug);
 
-#define RETURN_IF_FAILED(success, message)   \
-		if (!(success)) {                 \
-			spdlog::error((message)); \
-			return FALSE;           \
+#define RETURN_IF_FAILED(success, message)                                        \
+		if (!(success)) {                                                         \
+			spdlog::error(message);                                               \
+			spdlog::default_logger()->flush();                                    \
+			MessageBoxA(NULL,                                                     \
+				"An error occurred during initialization:\r\n"                    \
+				" " message "\r\n\r\n"                                            \
+				"Check your " LASERSIGHTS_FILENAME ".log file for more details.", \
+				"Laser Sights - Initialization error",                            \
+				MB_OK);                                                           \
+			return TRUE;                                                          \
 		}
 
+		RETURN_IF_FAILED(Addresses.Init(),                                      "Failed to initialize AddressManager");
 		RETURN_IF_FAILED(MH_Initialize() == MH_OK,                              "Failed to initialize MinHook");
 		RETURN_IF_FAILED(ExtendedWeaponComponentLaserSightInfo::InstallHooks(), "Failed to install ExtendedWeaponComponentLaserSightInfo hooks");
 		RETURN_IF_FAILED(LaserBeam::InstallHooks(),                             "Failed to install LaserBeam hooks");
