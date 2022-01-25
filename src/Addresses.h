@@ -20,14 +20,16 @@ public:
 	void* grmShader_BeginPass = nullptr;
 	void* grmShader_EndPass = nullptr;
 	void* grmShaderFactory_Instance = nullptr;
-	void* GetTextureFromGraphicsTxd = nullptr;
 	void* grcDevice_CreateVertexDeclaration = nullptr;
 	void* grcDevice_SetVertexDeclaration = nullptr;
 	void* grcDevice_BeginVertices = nullptr;
 	void* grcDevice_EndVertices = nullptr;
 	void* grcCreateBlendState = nullptr;
 	void* grcSetBlendState = nullptr;
+	void* grcCreateDepthStencilState = nullptr;
+	void* grcSetDepthStencilState = nullptr;
 	void* grcWorldIdentity = nullptr;
+	void* grcTextureFactory_Instance = nullptr;
 	void* AddDrawCommandCallback = nullptr;
 	void* CurrentCamera = nullptr;
 	void* WorldProbe_CShapeTestResults_AbortTest = nullptr;

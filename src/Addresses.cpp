@@ -97,8 +97,6 @@ bool AddressManager::Init()
 
 	res &= FindRIP(grmShaderFactory_Instance, "48 8B 0D ? ? ? ? 83 CE FF 48 8B 01 FF 50 08", 3);
 
-	res &= Find(GetTextureFromGraphicsTxd, "48 89 5C 24 ? 48 63 05 ? ? ? ? 48 8B 15 ? ? ? ? 8B D9", 0);
-
 	res &= Find(grcDevice_CreateVertexDeclaration, "48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 60 48 8B F1 48 63 CA", 0);
 
 	res &= Find(grcDevice_SetVertexDeclaration, "48 89 0D ? ? ? ? 33 C0 C3", 0);
@@ -111,7 +109,13 @@ bool AddressManager::Init()
 
 	res &= Find(grcSetBlendState, "49 83 C8 FF 83 CA FF E9", 0);
 
+	res &= Find(grcCreateDepthStencilState, "40 55 48 8B EC 48 83 EC 70 8B 41 04 8B 11 89 45 CC 8B 41 08 89 55 C8", 0);
+
+	res &= Find(grcSetDepthStencilState, "39 0D ? ? ? ? 8B 15 ? ? ? ? 65 48 8B 04 25", 0);
+
 	res &= Find(grcWorldIdentity, "48 8B C4 48 83 EC 68 0F 28 05 ? ? ? ? 0F 28 0D", 0);
+
+	res &= FindRIP(grcTextureFactory_Instance, "48 8B 1D ? ? ? ? 48 8B 10 48 8B 3B 48 8B C8 FF 92", 3);
 
 	res &= Find(AddDrawCommandCallback, "E8 ? ? ? ? 33 D2 8D 4A 10 E8 ? ? ? ? 48 85 C0 74 04", -0x15);
 

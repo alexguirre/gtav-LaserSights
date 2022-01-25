@@ -8,6 +8,10 @@ namespace rage
 	grcBlendStateHandle grcCreateBlendState(const D3D11_BLEND_DESC& desc);
 	void grcSetBlendState(grcBlendStateHandle blendStateHandle);
 
+	using grcDepthStencilStateHandle = uint32_t;
+	grcDepthStencilStateHandle grcCreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& desc);
+	void grcSetDepthStencilState(grcDepthStencilStateHandle blendStateHandle);
+
 	class grcVertexElement
 	{
 	public:

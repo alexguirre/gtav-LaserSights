@@ -3,23 +3,28 @@
 #include <mutex>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <iterator>
+#include <fileapi.h>
 #include <spdlog/spdlog.h>
 #include "grmShaderFactory.h"
 #include "fiAssetManager.h"
+#include "fiDevice.h"
 #include "grcDevice.h"
+#include "grcTextureFactory.h"
 #include "Addresses.h"
 #include <MinHook.h>
 #include "Matrix.h"
 #include "Hashing.h"
-#include <iterator>
-#include <fileapi.h>
+#include "Resources.h"
+#include <Hooking.Patterns.h>
 
 static constexpr bool ShaderHotReloadEnabled
 {
 #if _DEBUG
 	true
 #else
-	false
+	true
 #endif
 };
 static bool ReloadShaders{ false };
@@ -61,6 +66,7 @@ static void StartShadersFileWatcher()
 static struct LaserBeamGlobals
 {
 	rage::grcBlendStateHandle BlendState{ 0 };
+	//rage::grcDepthStencilStateHandle DepthStencilState{ 0 };
 	rage::grmShader* Shader{ nullptr };
 	struct
 	{
@@ -92,10 +98,18 @@ static size_t g_BeamDrawCallCount;
 static std::array<BeamDrawCall, 256> g_BeamDrawCallsRender;
 static size_t g_BeamDrawCallCountRender;
 
-static rage::grcTexture* GetTextureFromGraphicsTxd(uint32_t nameHash)
+static HMODULE g_hModule;
+
+static std::string MakeResourceMemoryFileName(int resourceId, const char* name)
 {
-	using Fn = rage::grcTexture* (*)(uint32_t);
-	return reinterpret_cast<Fn>(Addresses.GetTextureFromGraphicsTxd)(nameHash);
+	auto hResource = FindResourceA(g_hModule, MAKEINTRESOURCEA(resourceId), "RAW");
+	auto hMemory = LoadResource(g_hModule, hResource);
+	auto resourceSize = SizeofResource(g_hModule, hResource);
+	auto resourcePtr = LockResource(hMemory);
+
+	char fileName[256];
+	rage::fiDevice::MakeMemoryFileName(fileName, std::size(fileName), resourcePtr, resourceSize, false, name);
+	return fileName;
 }
 
 static void SetLaserBeamVertex(
@@ -165,6 +179,7 @@ static void RenderBeams()
 	if (g_BeamDrawCallCountRender > 0)
 	{
 		rage::grcSetBlendState(g_LaserBeam.BlendState);
+		//rage::grcSetDepthStencilState(g_LaserBeam.DepthStencilState);
 		if (g_LaserBeam.Shader->BeginDraw(static_cast<rage::grmShader::eDrawType>(0), true, g_LaserBeam.Techniques.LaserBeam))
 		{
 			g_LaserBeam.Shader->BeginPass(0);
@@ -184,6 +199,17 @@ static void RenderBeams()
 	}
 }
 
+static void LoadNoiseTexture()
+{
+	if (!g_LaserBeam.LaserNoiseTexture)
+	{
+		auto path = MakeResourceMemoryFileName(LASERSIGHTS_RES_ID_LASER_NOISE_DDS, "laser_noise.dds");
+		spdlog::debug("Loading noise texture from '{}'...", path);
+		g_LaserBeam.LaserNoiseTexture = rage::grcTextureFactory::Instance()->Create(path.c_str());
+		spdlog::debug(" > LaserNoiseTexture:{}", reinterpret_cast<void*>(g_LaserBeam.LaserNoiseTexture));
+	}
+}
+
 static void LoadShaderEffect()
 {
 	if (g_LaserBeam.BlendState == 0)
@@ -194,11 +220,32 @@ static void LoadShaderEffect()
 		blendDesc.IndependentBlendEnable = false;
 		blendDesc.RenderTarget[0] = {
 			true,
-			D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_OP_ADD,	// color
-			D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD,	// alpha
+			D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD,	// color
+			D3D11_BLEND_ZERO, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD,	// alpha
 			D3D11_COLOR_WRITE_ENABLE_ALL
 		};
 		g_LaserBeam.BlendState = rage::grcCreateBlendState(blendDesc);
+
+		//D3D11_DEPTH_STENCIL_DESC depthStencilDesc{};
+		//depthStencilDesc.BackFace = {
+		//	D3D11_STENCIL_OP_ZERO,					// StencilFailOp
+		//	D3D11_STENCIL_OP_ZERO,					// StencilDepthFailOp
+		//	D3D11_STENCIL_OP_ZERO,					// StencilPassOp
+		//	D3D11_COMPARISON_GREATER_EQUAL,	// StencilFunc
+		//};
+		//depthStencilDesc.DepthFunc = D3D11_COMPARISON_GREATER;
+		//depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+		//depthStencilDesc.FrontFace = {
+		//	D3D11_STENCIL_OP_ZERO,					// StencilFailOp
+		//	D3D11_STENCIL_OP_ZERO,					// StencilDepthFailOp
+		//	D3D11_STENCIL_OP_ZERO,					// StencilPassOp
+		//	D3D11_COMPARISON_GREATER_EQUAL,	// StencilFunc
+		//};
+		//depthStencilDesc.DepthEnable = true;
+		//depthStencilDesc.StencilEnable = false;
+		//depthStencilDesc.StencilReadMask = 0;
+		//depthStencilDesc.StencilWriteMask = 0;
+		//g_LaserBeam.DepthStencilState = rage::grcCreateDepthStencilState(depthStencilDesc);
 	}
 
 	spdlog::debug("Loading shader effect...");
@@ -222,6 +269,12 @@ static void LoadShaderEffect()
 
 	rage::grcEffect* effect = g_LaserBeam.Shader->m_Effect;
 	spdlog::debug(" > Effect:{}", reinterpret_cast<void*>(effect));
+	if (!effect)
+	{
+		spdlog::debug("Loading shader failed...");
+		spdlog::default_logger()->flush();
+		return;
+	}
 
 	// lookup techniques
 	g_LaserBeam.Techniques.LaserBeam = effect->LookupTechnique("LaserBeam");
@@ -266,13 +319,6 @@ static void Render()
 
 	if (g_BeamDrawCallCountRender > 0)
 	{
-		if (!g_LaserBeam.LaserNoiseTexture)
-		{
-			g_LaserBeam.LaserNoiseTexture = GetTextureFromGraphicsTxd(0x9FD921D0/* laser_noise */);
-			spdlog::debug("LaserNoiseTexture:{}", reinterpret_cast<void*>(g_LaserBeam.LaserNoiseTexture));
-			BindNoiseTexture();
-		}
-
 		rage::grcWorldIdentity();
 		UpdateTime();
 
@@ -290,6 +336,9 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 	g_LaserBeam.Shader = rage::grmShaderFactory::Instance()->Create();
 	spdlog::debug("LaserBeam Shader:{}", reinterpret_cast<void*>(g_LaserBeam.Shader));
 	LoadShaderEffect();
+	LoadNoiseTexture();
+	BindNoiseTexture();
+
 
 	// create vertex declarations
 	const rage::grcVertexElement laserBeamVertexElements[] =
@@ -330,7 +379,7 @@ static void sub_D63908_detour(uint64_t a1)
 	return sub_D63908_orig(a1);
 }
 
-bool LaserBeam::InstallHooks()
+static bool InstallHooks()
 {
 	void** gtaRenderThreadGameInterfaceVTable = (void**)Addresses.CGtaRenderThreadGameInterface_vftable;
 
@@ -341,6 +390,12 @@ bool LaserBeam::InstallHooks()
 	const auto res = MH_CreateHook(Addresses.sub_D63908, sub_D63908_detour, (void**)&sub_D63908_orig);
 
 	return res == MH_OK;
+}
+
+bool LaserBeam::Init(HMODULE hModule)
+{
+	g_hModule = hModule;
+	return InstallHooks();
 }
 
 void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector, const rage::Vec3V& color)

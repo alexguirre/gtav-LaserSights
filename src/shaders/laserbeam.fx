@@ -75,14 +75,14 @@ float4 PS_LaserBeam(VS_LaserBeam_Output input) : SV_Target
     uv.y = uv.y - 0.5;
     float t = abs(sin(gTime+r1.x))*0.15+0.9;
     float v = smoothstep(0.8*t, 0.0, abs(uv.y));
-    float a = saturate(tex2D(LaserNoise, gTime*0.1/**r1.xz*5*/).a)+0.05;//(my_noise(float3(gTime*0.1*uv*0.5, gTime+uv.x))+1.0)*0.25+0.005;
+    float a = saturate(tex2D(LaserNoise, gTime*0.1/**r1.xz*5*/).g)+0.05;//(my_noise(float3(gTime*0.1*uv*0.5, gTime+uv.x))+1.0)*0.25+0.005;
     // return float4(a, 0, 0, 1);
     float3 temp = input.color.rgb * v;
 
 
     float4 worldPos = mul(gViewInverse, input.view_position);
     float2 worldNoiseUV = gTime * 0.001 * float2((worldPos.x + worldPos.y + worldPos.z) * 0.25, (worldPos.x - worldPos.y - worldPos.z) * 0.25);
-    float worldNoise = tex2D(LaserNoise, worldNoiseUV).a;
+    float worldNoise = tex2D(LaserNoise, worldNoiseUV).g;
 
     // return float4(temp, v*0.0125*noise);
 
@@ -94,15 +94,15 @@ float4 PS_LaserBeam(VS_LaserBeam_Output input) : SV_Target
     r0.zw = float2(0.200000003,0.200000003) + r0.zw;
     float4 r0_reversed = (-gTime * particleSpeed) * float4(0.140000001,0.0299999993,0.0799999982,-0.0900000036) + r1.xzxz;
     r0_reversed.zw = float2(0.200000003,0.200000003) + r0_reversed.zw;
-    float dustNoise = tex2D(LaserNoise, r0.zw*0.15).a;
+    float dustNoise = tex2D(LaserNoise, r0.zw*0.15).g;
     
     float mult = 1.5;
     float2 noiseUV1 = r0.xy*mult, noiseUV2 = r0.zw*mult, noiseUV3 = r0_reversed.xy*mult, noiseUV4 = r0_reversed.zw*mult;
 
-    float noise1 = tex2D(LaserNoise, noiseUV1).x;
-    float noise2 = tex2D(LaserNoise, noiseUV2).x;
-    float noise3 = tex2D(LaserNoise, noiseUV3).x;
-    float noise4 = tex2D(LaserNoise, noiseUV4).x;
+    float noise1 = tex2D(LaserNoise, noiseUV1).r;
+    float noise2 = tex2D(LaserNoise, noiseUV2).r;
+    float noise3 = tex2D(LaserNoise, noiseUV3).r;
+    float noise4 = tex2D(LaserNoise, noiseUV4).r;
 
     r0.x = 8 * noise1 * noise2 * noise3 * noise4;
     r0.y = 0.5;// saturate(0.5 * 0.0299999993 + 1);

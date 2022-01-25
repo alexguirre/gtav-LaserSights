@@ -110,7 +110,9 @@
     <ClCompile Include="CReplay.cpp" />
     <ClCompile Include="ExtendedWeaponComponentLaserSightInfo.cpp" />
     <ClCompile Include="fiAssetManager.cpp" />
+    <ClCompile Include="fiDevice.cpp" />
     <ClCompile Include="grcDevice.cpp" />
+    <ClCompile Include="grcTextureFactory.cpp" />
     <ClCompile Include="grmShaderFactory.cpp" />
     <ClCompile Include="Hashing.cpp" />
     <ClCompile Include="LaserBeam.cpp" />
@@ -130,8 +132,10 @@
     <ClInclude Include="CWeaponComponentLaserSight.h" />
     <ClInclude Include="ExtendedWeaponComponentLaserSightInfo.h" />
     <ClInclude Include="fiAssetManager.h" />
+    <ClInclude Include="fiDevice.h" />
     <ClInclude Include="fwEntity.h" />
     <ClInclude Include="grcDevice.h" />
+    <ClInclude Include="grcTextureFactory.h" />
     <ClInclude Include="grmShaderFactory.h" />
     <ClInclude Include="Hashing.h" />
     <ClInclude Include="LaserBeam.h" />
@@ -140,11 +144,11 @@
     <ClInclude Include="parStructure.h" />
     <ClInclude Include="Replay.h" />
     <ClInclude Include="Vector.h" />
-    <ClInclude Include="VersionInfo.h" />
+    <ClInclude Include="Resources.h" />
     <ClInclude Include="WorldProbe.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="VersionInfo.rc" />
+    <ResourceCompile Include="Resources.rc" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders\laserbeam.fx">
@@ -162,6 +166,9 @@
     <None Include="shaders\laserbeam.fxc">
       <DeploymentContent>true</DeploymentContent>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\laser_noise.dds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -52,6 +52,12 @@
     <ClCompile Include="CReplay.cpp">
       <Filter>five</Filter>
     </ClCompile>
+    <ClCompile Include="fiDevice.cpp">
+      <Filter>rage</Filter>
+    </ClCompile>
+    <ClCompile Include="grcTextureFactory.cpp">
+      <Filter>rage\graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LaserSight.h" />
@@ -107,7 +113,13 @@
     <ClInclude Include="CReplay.h">
       <Filter>five</Filter>
     </ClInclude>
-    <ClInclude Include="VersionInfo.h" />
+    <ClInclude Include="Resources.h" />
+    <ClInclude Include="fiDevice.h">
+      <Filter>rage</Filter>
+    </ClInclude>
+    <ClInclude Include="grcTextureFactory.h">
+      <Filter>rage\graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dependencies">
@@ -137,9 +149,12 @@
     <Filter Include="shaders\lib">
       <UniqueIdentifier>{c117d7fc-1d66-47b7-8fbd-da792c4ba082}</UniqueIdentifier>
     </Filter>
+    <Filter Include="resources">
+      <UniqueIdentifier>{12b6382d-3a38-457f-88f7-bcf583f2c477}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="VersionInfo.rc" />
+    <ResourceCompile Include="Resources.rc" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders\lib\rage_shared.fx">
@@ -153,5 +168,10 @@
     <None Include="shaders\laserbeam.fxc">
       <Filter>shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\laser_noise.dds">
+      <Filter>resources</Filter>
+    </Image>
   </ItemGroup>
 </Project>

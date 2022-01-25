@@ -10,7 +10,7 @@
 #include "CTaskAimGun.h"
 #include "Replay.h"
 #include <filesystem>
-#include "VersionInfo.h"
+#include "Resources.h"
 
 static struct Config
 {

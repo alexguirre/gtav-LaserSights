@@ -15,6 +15,18 @@ namespace rage
 		reinterpret_cast<Fn>(Addresses.grcSetBlendState)(blendStateHandle);
 	}
 
+	grcDepthStencilStateHandle grcCreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& desc)
+	{
+		using Fn = grcBlendStateHandle(*)(const D3D11_DEPTH_STENCIL_DESC&, void*);
+		return reinterpret_cast<Fn>(Addresses.grcCreateDepthStencilState)(desc, nullptr);
+	}
+
+	void grcSetDepthStencilState(grcDepthStencilStateHandle blendStateHandle)
+	{
+		using Fn = decltype(&grcSetDepthStencilState);
+		reinterpret_cast<Fn>(Addresses.grcSetDepthStencilState)(blendStateHandle);
+	}
+
 	void grcWorldIdentity()
 	{
 		using Fn = decltype(&grcWorldIdentity);

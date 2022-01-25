@@ -7,7 +7,7 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <MinHook.h>
-#include "VersionInfo.h"
+#include "Resources.h"
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 {
@@ -33,7 +33,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 		RETURN_IF_FAILED(Addresses.Init(),                                      "Failed to initialize AddressManager");
 		RETURN_IF_FAILED(MH_Initialize() == MH_OK,                              "Failed to initialize MinHook");
 		RETURN_IF_FAILED(ExtendedWeaponComponentLaserSightInfo::InstallHooks(), "Failed to install ExtendedWeaponComponentLaserSightInfo hooks");
-		RETURN_IF_FAILED(LaserBeam::InstallHooks(),                             "Failed to install LaserBeam hooks");
+		RETURN_IF_FAILED(LaserBeam::Init(hModule),                              "Failed to initialize LaserBeam module");
 		RETURN_IF_FAILED(LaserSight::InstallHooks(),                            "Failed to install LaserSight hooks");
 		RETURN_IF_FAILED(Replay::InstallHooks(),                                "Failed to install Replay hooks");
 		RETURN_IF_FAILED(MH_EnableHook(MH_ALL_HOOKS) == MH_OK,                  "Failed to enable hooks");
