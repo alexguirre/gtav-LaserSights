@@ -93,7 +93,7 @@ namespace rage
 		grcEffect* m_Effect;
 		// ...
 
-		bool LoadEffect(const char* name, void* tokenizer = nullptr, bool a4 = true);
+		bool LoadEffect(const char* name, void* tokenizer = nullptr, bool returnDefaultIfFailed = false);
 	};
 
 	class grmShader : public grcInstanceData

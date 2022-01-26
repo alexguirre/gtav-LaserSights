@@ -192,6 +192,8 @@ bool AddressManager::Init()
 	res &= Find(CPacketObjectCreateBase_ctor_weaponComponentClassIdCheckHookLocation, "83 F8 02 74 16 48 8B 86 ? ? ? ? 48 8B 48 08", 0);
 
 	res &= Find(CPacketWeaponFlashLight_ReplayHandler_hookLocation, "4C 8B 82 ? ? ? ? 4D 85 C0 74 33 8A 51 1D 41 8A 48 49", 0);
+	
+	res &= Find(EmbeddedFXCPatchLocation, "BA ? ? ? ? E8 ? ? ? ? 84 C0 74 1B 4C 8D 4C 24", 5);
 
 	return res;
 }

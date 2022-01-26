@@ -56,6 +56,7 @@ public:
 	void* CWeaponComponentLaserSight_vftable = nullptr;
 	void* CPacketObjectCreateBase_ctor_weaponComponentClassIdCheckHookLocation = nullptr;
 	void* CPacketWeaponFlashLight_ReplayHandler_hookLocation = nullptr;
+	void* EmbeddedFXCPatchLocation = nullptr;
 
 	bool Init();
 };

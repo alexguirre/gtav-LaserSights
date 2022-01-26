@@ -43,10 +43,10 @@ namespace rage
 		}
 	}
 
-	bool grcInstanceData::LoadEffect(const char* name, void* tokenizer, bool a4)
+	bool grcInstanceData::LoadEffect(const char* name, void* tokenizer, bool returnDefaultIfFailed)
 	{
 		using Fn = bool(*)(grcInstanceData*, const char*, void*, bool);
-		return reinterpret_cast<Fn>(Addresses.grcInstanceData_LoadEffect)(this, name, tokenizer, a4);
+		return reinterpret_cast<Fn>(Addresses.grcInstanceData_LoadEffect)(this, name, tokenizer, returnDefaultIfFailed);
 	}
 
 	int grmShader::BeginDraw(grmShader::eDrawType drawType, bool a3, grcEffectTechnique__ techniqueId)

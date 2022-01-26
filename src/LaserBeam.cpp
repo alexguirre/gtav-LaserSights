@@ -17,14 +17,13 @@
 #include "Matrix.h"
 #include "Hashing.h"
 #include "Resources.h"
-#include <Hooking.Patterns.h>
 
 static constexpr bool ShaderHotReloadEnabled
 {
 #if _DEBUG
 	true
 #else
-	true
+	false
 #endif
 };
 static bool ReloadShaders{ false };
@@ -141,7 +140,7 @@ static void UpdateTime()
 
 static void BindNoiseTexture()
 {
-	if (g_LaserBeam.LaserNoiseTexture)
+	if (g_LaserBeam.Shader->m_Effect && g_LaserBeam.LaserNoiseTexture)
 	{
 		g_LaserBeam.Shader->m_Effect->SetVar(g_LaserBeam.Shader, g_LaserBeam.Vars.LaserNoise, g_LaserBeam.LaserNoiseTexture);
 	}
@@ -204,7 +203,7 @@ static void LoadNoiseTexture()
 	if (!g_LaserBeam.LaserNoiseTexture)
 	{
 		auto path = MakeResourceMemoryFileName(LASERSIGHTS_RES_ID_LASER_NOISE_DDS, "laser_noise.dds");
-		spdlog::debug("Loading noise texture from '{}'...", path);
+		spdlog::debug("Loading embedded noise texture from '{}'...", path);
 		g_LaserBeam.LaserNoiseTexture = rage::grcTextureFactory::Instance()->Create(path.c_str());
 		spdlog::debug(" > LaserNoiseTexture:{}", reinterpret_cast<void*>(g_LaserBeam.LaserNoiseTexture));
 	}
@@ -258,14 +257,34 @@ static void LoadShaderEffect()
 	if constexpr (ShaderHotReloadEnabled)
 	{
 		rage::fiAssetManager::Instance()->PushFolder("shaders");
+		spdlog::debug("Loading shader FXC from shaders directory in game root (hot-reload)...");
+		g_LaserBeam.Shader->LoadEffect("laserbeam");
+		rage::fiAssetManager::Instance()->PopFolder();
 	}
-	else
+	else // Load embedded FXC
 	{
-		rage::fiAssetManager::Instance()->PushFolder("common:/shaders");
-	}
-	g_LaserBeam.Shader->LoadEffect("laserbeam");
-	rage::fiAssetManager::Instance()->PopFolder();
+		// Patch call to rage::fiAssetManager::InsertPathElement that prefixes the shader name with
+		// the correct directory (win32_40_final/, win32_40_lq_final/ or win32_nvstereo_final/).
+		// This doesn't work with the memory file names used to load the embedded FXC,
+		// which end up looking like win32_40_final/memory:$123ABC...
+		auto addr = reinterpret_cast<uint8_t*>(Addresses.EmbeddedFXCPatchLocation);
+		std::array<uint8_t, 5> savedCallInstruction;
+		std::memcpy(savedCallInstruction.data(), addr, savedCallInstruction.size());
+		addr[0] = 0xB0; // mov al, 1
+		addr[1] = 0x01;
+		addr[2] = 0x90; // nop
+		addr[3] = 0x90; // nop
+		addr[4] = 0x90; // nop
+		FlushInstructionCache(GetCurrentProcess(), addr, savedCallInstruction.size());
 
+		auto path = MakeResourceMemoryFileName(LASERSIGHTS_RES_ID_LASERBEAM_FXC, "laserbeam.fxc");
+		spdlog::debug("Loading embedded shader FXC from '{}'...", path);
+		g_LaserBeam.Shader->LoadEffect(path.c_str());
+
+		// Restore call to rage::fiAssetManager::InsertPathElement
+		std::memcpy(addr, savedCallInstruction.data(), savedCallInstruction.size());
+		FlushInstructionCache(GetCurrentProcess(), addr, savedCallInstruction.size());
+	}
 
 	rage::grcEffect* effect = g_LaserBeam.Shader->m_Effect;
 	spdlog::debug(" > Effect:{}", reinterpret_cast<void*>(effect));
