@@ -200,13 +200,25 @@ static void RenderBeams()
 
 static void LoadNoiseTexture()
 {
-	if (!g_LaserBeam.LaserNoiseTexture)
+	if (g_LaserBeam.LaserNoiseTexture)
+	{
+		// TODO: destroy noise texture
+		g_LaserBeam.LaserNoiseTexture = nullptr;
+	}
+
+	if constexpr (ShaderHotReloadEnabled)
+	{
+		auto path = "cfx:/plugins/shaders/laser_noise.dds";
+		spdlog::debug("Loading external noise texture from '{}' (hot-reload)...", path);
+		g_LaserBeam.LaserNoiseTexture = rage::grcTextureFactory::Instance()->Create(path);
+	}
+	else // Load embedded DDS
 	{
 		auto path = MakeResourceMemoryFileName(LASERSIGHTS_RES_ID_LASER_NOISE_DDS, "laser_noise.dds");
 		spdlog::debug("Loading embedded noise texture from '{}'...", path);
 		g_LaserBeam.LaserNoiseTexture = rage::grcTextureFactory::Instance()->Create(path.c_str());
-		spdlog::debug(" > LaserNoiseTexture:{}", reinterpret_cast<void*>(g_LaserBeam.LaserNoiseTexture));
 	}
+	spdlog::debug(" > LaserNoiseTexture:{}", reinterpret_cast<void*>(g_LaserBeam.LaserNoiseTexture));
 }
 
 static void LoadShaderEffect()
@@ -256,8 +268,8 @@ static void LoadShaderEffect()
 
 	if constexpr (ShaderHotReloadEnabled)
 	{
-		rage::fiAssetManager::Instance()->PushFolder("shaders");
-		spdlog::debug("Loading shader FXC from shaders directory in game root (hot-reload)...");
+		rage::fiAssetManager::Instance()->PushFolder("cfx:/plugins/shaders");
+		spdlog::debug("Loading external shader FXC from shaders directory in game root (hot-reload)...");
 		g_LaserBeam.Shader->LoadEffect("laserbeam");
 		rage::fiAssetManager::Instance()->PopFolder();
 	}
@@ -332,6 +344,7 @@ static void Render()
 		if (ReloadShaders)
 		{
 			LoadShaderEffect();
+			LoadNoiseTexture();
 			BindNoiseTexture();
 		}
 	}

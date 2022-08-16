@@ -49,3 +49,4 @@ END
 LASERSIGHTS_RES_ID_LASER_NOISE_DDS RAW ".\\resources\\laser_noise.dds"
 LASERSIGHTS_RES_ID_LASERBEAM_FXC   RAW ".\\shaders\\laserbeam.fxc"
 
+FX_ASI_BUILD 2699 BEGIN "\0" END
