@@ -11,6 +11,12 @@ sampler2D LaserNoise : register(s10) : register(t10)
     AddressV = WRAP;
 };
 
+sampler2D DepthBuffer : register(s11) : register(t11)
+{
+    AddressU = WRAP;
+    AddressV = WRAP;
+};
+
 struct VS_LaserBeam_Input
 {
 	float3 position : POSITION;

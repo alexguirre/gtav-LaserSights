@@ -17,6 +17,7 @@
 #include "Matrix.h"
 #include "Hashing.h"
 #include "Resources.h"
+#include <d3d9.h>
 
 static constexpr bool ShaderHotReloadEnabled
 {
@@ -65,7 +66,7 @@ static void StartShadersFileWatcher()
 static struct LaserBeamGlobals
 {
 	rage::grcBlendStateHandle BlendState{ 0 };
-	//rage::grcDepthStencilStateHandle DepthStencilState{ 0 };
+	rage::grcDepthStencilStateHandle DepthStencilState{ 0 };
 	rage::grmShader* Shader{ nullptr };
 	struct
 	{
@@ -75,6 +76,7 @@ static struct LaserBeamGlobals
 	{
 		rage::grcEffectVar__ gTime{ 0 };
 		rage::grcEffectVar__ LaserNoise{ 0 };
+		rage::grcEffectVar__ DepthBuffer{ 0 };
 	} Vars{};
 	struct
 	{
@@ -91,11 +93,16 @@ struct BeamDrawCall
 	rage::Vec3V m_RightVector;
 	rage::Vec3V m_Color;
 };
-static std::array<BeamDrawCall, 256> g_BeamDrawCalls;
-static size_t g_BeamDrawCallCount;
+struct BeamDrawCallsBuffer
+{
+	std::array<BeamDrawCall, 256> m_DrawCalls;
+	size_t m_NumDrawCalls{ 0 };
+};
+static std::array<BeamDrawCallsBuffer, 2> g_BeamDrawCallBuffers;
+static std::array<bool, 2> g_BeamDrawCallBufferSentToRender;
+static uint32_t g_BeamDrawCallBuffersIdx{ 0 };
 // copy of the draw calls to be used in the render thread
-static std::array<BeamDrawCall, 256> g_BeamDrawCallsRender;
-static size_t g_BeamDrawCallCountRender;
+static BeamDrawCallsBuffer g_BeamDrawCallBufferToRender;
 
 static HMODULE g_hModule;
 
@@ -175,9 +182,9 @@ static void RenderBeam(const BeamDrawCall& drawCall)
 
 static void RenderBeams()
 {
-	if (g_BeamDrawCallCountRender > 0)
+	if (g_BeamDrawCallBufferToRender.m_NumDrawCalls > 0)
 	{
-		rage::grcSetBlendState(g_LaserBeam.BlendState);
+		//rage::grcSetBlendState(g_LaserBeam.BlendState);
 		//rage::grcSetDepthStencilState(g_LaserBeam.DepthStencilState);
 		if (g_LaserBeam.Shader->BeginDraw(static_cast<rage::grmShader::eDrawType>(0), true, g_LaserBeam.Techniques.LaserBeam))
 		{
@@ -185,16 +192,14 @@ static void RenderBeams()
 
 			rage::grcDevice::SetVertexDeclaration(g_LaserBeam.VertexDecls.LaserBeam);
 
-			for (int i = 0; i < g_BeamDrawCallCountRender; i++)
+			for (int i = 0; i < g_BeamDrawCallBufferToRender.m_NumDrawCalls; i++)
 			{
-				RenderBeam(g_BeamDrawCallsRender[i]);
+				RenderBeam(g_BeamDrawCallBufferToRender.m_DrawCalls[i]);
 			}
 
 			g_LaserBeam.Shader->EndPass();
 			g_LaserBeam.Shader->EndDraw();
 		}
-
-		g_BeamDrawCallCountRender = 0;
 	}
 }
 
@@ -237,26 +242,26 @@ static void LoadShaderEffect()
 		};
 		g_LaserBeam.BlendState = rage::grcCreateBlendState(blendDesc);
 
-		//D3D11_DEPTH_STENCIL_DESC depthStencilDesc{};
-		//depthStencilDesc.BackFace = {
-		//	D3D11_STENCIL_OP_ZERO,					// StencilFailOp
-		//	D3D11_STENCIL_OP_ZERO,					// StencilDepthFailOp
-		//	D3D11_STENCIL_OP_ZERO,					// StencilPassOp
-		//	D3D11_COMPARISON_GREATER_EQUAL,	// StencilFunc
-		//};
-		//depthStencilDesc.DepthFunc = D3D11_COMPARISON_GREATER;
-		//depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-		//depthStencilDesc.FrontFace = {
-		//	D3D11_STENCIL_OP_ZERO,					// StencilFailOp
-		//	D3D11_STENCIL_OP_ZERO,					// StencilDepthFailOp
-		//	D3D11_STENCIL_OP_ZERO,					// StencilPassOp
-		//	D3D11_COMPARISON_GREATER_EQUAL,	// StencilFunc
-		//};
-		//depthStencilDesc.DepthEnable = true;
-		//depthStencilDesc.StencilEnable = false;
-		//depthStencilDesc.StencilReadMask = 0;
-		//depthStencilDesc.StencilWriteMask = 0;
-		//g_LaserBeam.DepthStencilState = rage::grcCreateDepthStencilState(depthStencilDesc);
+		D3D11_DEPTH_STENCIL_DESC depthStencilDesc{};
+		depthStencilDesc.BackFace = {
+			D3D11_STENCIL_OP_ZERO,					// StencilFailOp
+			D3D11_STENCIL_OP_ZERO,					// StencilDepthFailOp
+			D3D11_STENCIL_OP_ZERO,					// StencilPassOp
+			D3D11_COMPARISON_GREATER_EQUAL,	// StencilFunc
+		};
+		depthStencilDesc.DepthFunc = D3D11_COMPARISON_GREATER;
+		depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+		depthStencilDesc.FrontFace = {
+			D3D11_STENCIL_OP_ZERO,					// StencilFailOp
+			D3D11_STENCIL_OP_ZERO,					// StencilDepthFailOp
+			D3D11_STENCIL_OP_ZERO,					// StencilPassOp
+			D3D11_COMPARISON_GREATER_EQUAL,	// StencilFunc
+		};
+		depthStencilDesc.DepthEnable = true;
+		depthStencilDesc.StencilEnable = false;
+		depthStencilDesc.StencilReadMask = 0;
+		depthStencilDesc.StencilWriteMask = 0;
+		g_LaserBeam.DepthStencilState = rage::grcCreateDepthStencilState(depthStencilDesc);
 	}
 
 	spdlog::debug("Loading shader effect...");
@@ -324,7 +329,7 @@ static void LoadShaderEffect()
 	ReloadShaders = false;
 }
 
-static void Render()
+static void Render(rage::grcTexture* depthBuffer)
 {
 	if constexpr (ShaderHotReloadEnabled)
 	{
@@ -349,9 +354,14 @@ static void Render()
 		}
 	}
 
-	if (g_BeamDrawCallCountRender > 0)
+	if (g_BeamDrawCallBufferToRender.m_NumDrawCalls > 0)
 	{
-		rage::grcWorldIdentity();
+		if (g_LaserBeam.Shader->m_Effect && depthBuffer)
+		{
+			g_LaserBeam.Shader->m_Effect->SetVar(g_LaserBeam.Shader, g_LaserBeam.Vars.DepthBuffer, depthBuffer);
+		}
+
+		//rage::grcWorldIdentity();
 		UpdateTime();
 
 		RenderBeams();
@@ -387,7 +397,7 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 
 	if constexpr (ShaderHotReloadEnabled)
 	{
-		StartShadersFileWatcher();
+		//StartShadersFileWatcher();
 	}
 }
 
@@ -397,18 +407,51 @@ static void AddDrawCommandCallback(void(*cb)())
 	reinterpret_cast<Fn>(Addresses.AddDrawCommandCallback)(cb);
 }
 
-static void(*sub_D63908_orig)(uint64_t a1);
-static void sub_D63908_detour(uint64_t a1)
+static void AddDrawCommandCallbackInt32(void(*cb)(uint32_t arg), uint64_t unk, uint32_t& arg)
 {
-	// copy the draw calls to the render thread array
-	memmove_s(g_BeamDrawCallsRender.data(), g_BeamDrawCallsRender.size() * sizeof(BeamDrawCall),
-		g_BeamDrawCalls.data(), g_BeamDrawCallCount * sizeof(BeamDrawCall));
-	g_BeamDrawCallCountRender = g_BeamDrawCallCount;
-	g_BeamDrawCallCount = 0;
+	using Fn = decltype(&AddDrawCommandCallbackInt32);
+	reinterpret_cast<Fn>(Addresses.AddDrawCommandCallbackInt32)(cb, unk, arg);
+}
 
-	AddDrawCommandCallback(Render);
+static void(*drawDeferredVolumes_orig)(uint8_t a, rage::grcTexture* depthBuffer);
+static void drawDeferredVolumes_detour(uint8_t a, rage::grcTexture* depthBuffer)
+{
+	D3DPERF_BeginEvent(D3DCOLOR_RGBA(255, 255, 255, 255), L"drawDeferredVolumes");
 
-	return sub_D63908_orig(a1);
+	drawDeferredVolumes_orig(a, depthBuffer);
+
+	D3DPERF_BeginEvent(D3DCOLOR_RGBA(255, 0, 0, 255), L"Render Laser Sights");
+	Render(depthBuffer);
+	D3DPERF_EndEvent();
+	
+	D3DPERF_EndEvent();
+}
+
+static void(*addUpdateLightBuffersToRenderCommand_orig)();
+static void addUpdateLightBuffersToRenderCommand_detour()
+{
+	addUpdateLightBuffersToRenderCommand_orig();
+	
+	AddDrawCommandCallbackInt32([](uint32_t bufferIndex)
+	{
+		if (!g_BeamDrawCallBufferSentToRender[bufferIndex])
+		{
+			auto& currBuffer = g_BeamDrawCallBuffers[bufferIndex];
+			std::copy_n(currBuffer.m_DrawCalls.begin(), currBuffer.m_NumDrawCalls, g_BeamDrawCallBufferToRender.m_DrawCalls.begin());
+			g_BeamDrawCallBufferToRender.m_NumDrawCalls = currBuffer.m_NumDrawCalls;
+			g_BeamDrawCallBufferSentToRender[bufferIndex] = true;
+		}
+	}, 0, g_BeamDrawCallBuffersIdx);
+}
+
+static void(*resetSceneLights_orig)();
+static void resetSceneLights_detour()
+{
+	resetSceneLights_orig();
+	
+	g_BeamDrawCallBuffersIdx = (g_BeamDrawCallBuffersIdx + 1) % g_BeamDrawCallBuffers.size();
+	g_BeamDrawCallBuffers[g_BeamDrawCallBuffersIdx].m_NumDrawCalls = 0;
+	g_BeamDrawCallBufferSentToRender[g_BeamDrawCallBuffersIdx] = false;
 }
 
 static bool InstallHooks()
@@ -419,9 +462,11 @@ static bool InstallHooks()
 
 	gtaRenderThreadGameInterfaceVTable[5] = CGtaRenderThreadGameInterface_RenderThreadInit_detour;
 
-	const auto res = MH_CreateHook(Addresses.sub_D63908, sub_D63908_detour, (void**)&sub_D63908_orig);
+	const auto res1 = MH_CreateHook(Addresses.drawDeferredVolumes, drawDeferredVolumes_detour, (void**)&drawDeferredVolumes_orig);
+	const auto res2 = MH_CreateHook(Addresses.addUpdateLightBuffersToRenderCommand, addUpdateLightBuffersToRenderCommand_detour, (void**)&addUpdateLightBuffersToRenderCommand_orig);
+	const auto res3 = MH_CreateHook(Addresses.resetSceneLights, resetSceneLights_detour, (void**)&resetSceneLights_orig);
 
-	return res == MH_OK;
+	return res1 == MH_OK && res2 == MH_OK && res3 == MH_OK;
 }
 
 bool LaserBeam::Init(HMODULE hModule)
@@ -432,9 +477,10 @@ bool LaserBeam::Init(HMODULE hModule)
 
 void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector, const rage::Vec3V& color)
 {
-	if (g_BeamDrawCallCount < g_BeamDrawCalls.size())
+	auto& currBuffer = g_BeamDrawCallBuffers[g_BeamDrawCallBuffersIdx];
+	if (currBuffer.m_NumDrawCalls < currBuffer.m_DrawCalls.size())
 	{
-		g_BeamDrawCalls[g_BeamDrawCallCount] = { width * 0.5f, from, to, rightVector, color };
-		g_BeamDrawCallCount++;
+		currBuffer.m_DrawCalls[currBuffer.m_NumDrawCalls] = { width * 0.5f, from, to, rightVector, color };
+		currBuffer.m_NumDrawCalls++;
 	}
 }

@@ -119,6 +119,8 @@ bool AddressManager::Init()
 
 	res &= Find(AddDrawCommandCallback, "E8 ? ? ? ? 33 D2 8D 4A 10 E8 ? ? ? ? 48 85 C0 74 04", -0x15);
 
+	res &= FindRIP(AddDrawCommandCallbackInt32, "E8 ? ? ? ? 4C 8D 45 10 48 8D 0D ? ? ? ? 33 D2 C7 45", 1);
+
 	res &= FindRIP(CurrentCamera, "48 8B 1D ? ? ? ? 0F 29 70 E8 48 8B F2", 3);
 
 	res &= Find(WorldProbe_CShapeTestResults_AbortTest, "48 89 5C 24 ? 57 48 83 EC 20 83 79 04 03 48 8B D9 75 10", 0);
@@ -194,6 +196,14 @@ bool AddressManager::Init()
 	res &= Find(CPacketWeaponFlashLight_ReplayHandler_hookLocation, "4C 8B 82 ? ? ? ? 4D 85 C0 74 33 8A 51 1D 41 8A 48 49", 0);
 	
 	res &= Find(EmbeddedFXCPatchLocation, "BA ? ? ? ? E8 ? ? ? ? 84 C0 74 1B 4C 8D 4C 24", 5);
+
+	res &= Find(sub_55D038, "48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 40 8A D9 E8 ? ? ? ? 0F 28 05", 0);
+
+	res &= Find(drawDeferredVolumes, "48 83 EC 30 83 3D ? ? ? ? ? 44 8A F9 0F 84 ? ? ? ? 48 8B 0D ? ? ? ? 44 8B 05", -0x14);
+
+	res &= Find(addUpdateLightBuffersToRenderCommand, "48 83 EC 38 F6 05 ? ? ? ? ? 75 30 E8 ? ? ? ? 48 85 C0 74 1F", 0);
+
+	res &= Find(resetSceneLights, "8B 0D ? ? ? ? 8B 15 ? ? ? ? 33 ED FF C1 4C 8D 35 ? ? ? ? 89 2D", -0x19);
 
 	return res;
 }

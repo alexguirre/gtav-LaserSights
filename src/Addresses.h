@@ -31,6 +31,7 @@ public:
 	void* grcWorldIdentity = nullptr;
 	void* grcTextureFactory_Instance = nullptr;
 	void* AddDrawCommandCallback = nullptr;
+	void* AddDrawCommandCallbackInt32 = nullptr;
 	void* CurrentCamera = nullptr;
 	void* WorldProbe_CShapeTestResults_AbortTest = nullptr;
 	void* WorldProbe_CShapeTestDesc_SetResultsStructure = nullptr;
@@ -57,6 +58,10 @@ public:
 	void* CPacketObjectCreateBase_ctor_weaponComponentClassIdCheckHookLocation = nullptr;
 	void* CPacketWeaponFlashLight_ReplayHandler_hookLocation = nullptr;
 	void* EmbeddedFXCPatchLocation = nullptr;
+	void* sub_55D038 = nullptr;
+	void* drawDeferredVolumes = nullptr;
+	void* addUpdateLightBuffersToRenderCommand = nullptr;
+	void* resetSceneLights = nullptr;
 
 	bool Init();
 };
