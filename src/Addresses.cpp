@@ -205,5 +205,7 @@ bool AddressManager::Init()
 
 	res &= Find(resetSceneLights, "8B 0D ? ? ? ? 8B 15 ? ? ? ? 33 ED FF C1 4C 8D 35 ? ? ? ? 89 2D", -0x19);
 
+	res &= FindRIP(DepthBufferPreAlpha, "48 8B 05 ? ? ? ? 33 D2 44 39 35 ? ? ? ? 76 2D 4C 8D 8D", 3);
+
 	return res;
 }

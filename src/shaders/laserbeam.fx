@@ -17,6 +17,12 @@ sampler2D DepthBuffer : register(s11) : register(t11)
     AddressV = WRAP;
 };
 
+sampler2D DepthBufferPreAlpha : register(s12) : register(t12)
+{
+    AddressU = WRAP;
+    AddressV = WRAP;
+};
+
 struct VS_LaserBeam_Input
 {
 	float3 position : POSITION;
@@ -115,7 +121,13 @@ float4 PS_LaserBeam(VS_LaserBeam_Output input) : SV_Target
     r0.x = r0.y * r0.x;
     r0.x = r0.x * 15 + 0.75;
     r0.x *= dustNoise;
-    return float4(temp, v*0.0125*worldNoise*r0.x);
+    float4 output = float4(temp, 100.0f*v*0.0125*worldNoise*r0.x);
+
+    float laserDepth = input.position.z;
+    float depthPreAlpha = tex2D(DepthBufferPreAlpha, input.position.xy / float2(1920.0f, 1080.0f)).x; // TODO: unhardcode screen res
+    bool depthTest = (depthPreAlpha <= laserDepth); // TODO: does seem to work with water?
+
+    return output * depthTest;
 }
 
 technique LaserBeam

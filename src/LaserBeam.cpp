@@ -77,6 +77,7 @@ static struct LaserBeamGlobals
 		rage::grcEffectVar__ gTime{ 0 };
 		rage::grcEffectVar__ LaserNoise{ 0 };
 		rage::grcEffectVar__ DepthBuffer{ 0 };
+		rage::grcEffectVar__ DepthBufferPreAlpha{ 0 };
 	} Vars{};
 	struct
 	{
@@ -184,7 +185,7 @@ static void RenderBeams()
 {
 	if (g_BeamDrawCallBufferToRender.m_NumDrawCalls > 0)
 	{
-		//rage::grcSetBlendState(g_LaserBeam.BlendState);
+		rage::grcSetBlendState(g_LaserBeam.BlendState);
 		//rage::grcSetDepthStencilState(g_LaserBeam.DepthStencilState);
 		if (g_LaserBeam.Shader->BeginDraw(static_cast<rage::grmShader::eDrawType>(0), true, g_LaserBeam.Techniques.LaserBeam))
 		{
@@ -321,10 +322,14 @@ static void LoadShaderEffect()
 	// lookup vars
 	g_LaserBeam.Vars.gTime = effect->LookupVar("gTime");
 	g_LaserBeam.Vars.LaserNoise = effect->LookupVar("LaserNoise");
+	g_LaserBeam.Vars.DepthBuffer = effect->LookupVar("DepthBuffer");
+	g_LaserBeam.Vars.DepthBufferPreAlpha = effect->LookupVar("DepthBufferPreAlpha");
 
 	spdlog::debug(" > Vars:");
 	spdlog::debug("     gTime:{}", g_LaserBeam.Vars.gTime);
 	spdlog::debug("     LaserNoise:{}", g_LaserBeam.Vars.LaserNoise);
+	spdlog::debug("     DepthBuffer:{}", g_LaserBeam.Vars.DepthBuffer);
+	spdlog::debug("     DepthBufferPreAlpha:{}", g_LaserBeam.Vars.DepthBufferPreAlpha);
 
 	ReloadShaders = false;
 }
@@ -359,6 +364,10 @@ static void Render(rage::grcTexture* depthBuffer)
 		if (g_LaserBeam.Shader->m_Effect && depthBuffer)
 		{
 			g_LaserBeam.Shader->m_Effect->SetVar(g_LaserBeam.Shader, g_LaserBeam.Vars.DepthBuffer, depthBuffer);
+		}
+		if (g_LaserBeam.Shader->m_Effect && Addresses.DepthBufferPreAlpha && *(void**)Addresses.DepthBufferPreAlpha)
+		{
+			g_LaserBeam.Shader->m_Effect->SetVar(g_LaserBeam.Shader, g_LaserBeam.Vars.DepthBufferPreAlpha, *(rage::grcTexture**)Addresses.DepthBufferPreAlpha);
 		}
 
 		//rage::grcWorldIdentity();

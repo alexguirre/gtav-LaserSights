@@ -76,11 +76,12 @@ public:
 	virtual void f_86() = 0;
 	virtual void f_87() = 0;
 	virtual void f_88() = 0;
+	virtual void f_89() = 0;
 	virtual bool DoShapeTest(rage::fwEntity* ped, rage::Vec3V* startPosition, rage::Vec3V* endPosition, void* a5, float* a6, bool a7) = 0;
-	virtual void f_90() = 0;
+	virtual void f_91() = 0;
 	virtual bool f_Unk1() = 0;
 	virtual bool f_Unk2() = 0;
-	virtual void f_93() = 0;
 	virtual void f_94() = 0;
 	virtual void f_95() = 0;
+	virtual void f_96() = 0;
 };

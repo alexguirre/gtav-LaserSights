@@ -62,6 +62,7 @@ public:
 	void* drawDeferredVolumes = nullptr;
 	void* addUpdateLightBuffersToRenderCommand = nullptr;
 	void* resetSceneLights = nullptr;
+	void* DepthBufferPreAlpha = nullptr;
 
 	bool Init();
 };

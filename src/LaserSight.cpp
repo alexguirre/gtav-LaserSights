@@ -86,6 +86,7 @@ static void StartConfigFileWatcher()
 	CloseHandle(h);
 }
 
+// NOTE: CScriptIM::DrawLine crashes if called during R* Editor export
 static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end, uint32_t color)
 {
 	reinterpret_cast<decltype(&CScriptIM_DrawLine)>(Addresses.CScriptIM_DrawLine)(start, end, color);
@@ -95,8 +96,8 @@ static rage::aiTaskTree* GetPedTaskTree(rage::fwEntity* ped)
 {
 	// TODO: get offsets from patterns
 	constexpr int IntelligenceOffset = 0x10C0;
-	constexpr int TaskManagerOffset = 0x370; // b2245
-	constexpr int TaskTreeOffset = 0x0;
+	constexpr int TaskManagerOffset = 0x368; // b2699
+	constexpr int TaskTreeOffset = 0x8;
 
 	uint8_t* p = reinterpret_cast<uint8_t*>(ped);
 	uint8_t* intelligence = *reinterpret_cast<uint8_t**>(p + IntelligenceOffset);
@@ -132,7 +133,7 @@ static void PlayToggleSound(void* weapon, bool isOn)
 
 static bool IsLaserVisible(CWeaponComponentLaserSight* sight)
 {
-	if (sight->m_IsOff)
+	if (sight->State().IsOff)
 	{
 		return false;
 	}
@@ -158,77 +159,92 @@ static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight
 {
 	if (IsContextPressed())
 	{
-		This->m_IsOff = !This->m_IsOff;
-		PlayToggleSound(This->m_OwnerWeapon, !This->m_IsOff);
+		auto& s = This->State();
+		s.IsOff ^= 1;
+		PlayToggleSound(This->m_OwnerWeapon, !s.IsOff);
 	}
 }
 
 static void(*CWeaponComponentLaserSight_ProcessPostPreRender_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
 static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponComponentLaserSight* This, rage::fwEntity* entity)
 {
-	if (This->m_OwnerWeapon)
-	{
-		Replay::RecordLaserSightState(GetWeaponObject(This), !This->m_IsOff);
-	}
-
 	if (!IsLaserVisible(This))
 	{
+		if (This->m_OwnerWeapon)
+		{
+			Replay::RecordLaserSightState(GetWeaponObject(This), false, {});
+		}
 		return;
 	}
 
 	if (This->m_OwnerWeapon && This->m_ComponentObject && This->m_LaserSightBoneIndex != -1)
 	{
-		// TODO: replace hardcoded offset
-		constexpr int PlayerInfoOffset = 0x10C8; // b2245
-		const bool isPlayer = entity && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(entity) + PlayerInfoOffset));
-
 		const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
-
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);
+		rage::Vec3V startPos, endPos;
 
-		const rage::Vec3V origStartPos = boneMtx.Position();
-		const rage::Vec3V origEndPos = origStartPos + boneMtx.Forward() * info->BeamRange;
-
-		rage::Vec3V startPos = origStartPos, endPos = origEndPos;
-
-		if (info->DebugLines)
+		if (This->State().IsInReplay)
 		{
-			CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
+			startPos = boneMtx.Position();
+			endPos = startPos + This->GetReplayDiff();
+
+			//CScriptIM_DrawLine(startPos, endPos, 0xFFFF00FF);
 		}
-
-		CCoronas::Instance()->Draw(startPos, info->CoronaSize, info->CoronaColor, info->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
-
-		if (isPlayer)
+		else
 		{
-			constexpr uint32_t CTaskAimGunOnFoot = 4;
-			constexpr uint32_t CTaskAimGunVehicleDriveBy = 295;
-			constexpr uint32_t CTaskAimGunBlindFire = 304;
+			// TODO: replace hardcoded offset
+			constexpr int PlayerInfoOffset = 0x10C8; // b2699
+			const bool isPlayer = entity && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(entity) + PlayerInfoOffset));
 
-			rage::aiTaskTree* taskTree = GetPedTaskTree(entity);
-			rage::aiTask* task = nullptr;
-			if ((task = taskTree->FindTaskByTypeActive(CTaskAimGunOnFoot)) ||
-				(task = taskTree->FindTaskByTypeActive(CTaskAimGunVehicleDriveBy)) ||
-				(task = taskTree->FindTaskByTypeActive(CTaskAimGunBlindFire)))
+			const rage::Vec3V origStartPos = boneMtx.Position();
+			const rage::Vec3V origEndPos = origStartPos + boneMtx.Forward() * info->BeamRange;
+
+			startPos = origStartPos;
+			endPos = origEndPos;
+
+			if (info->DebugLines)
 			{
-				CTaskAimGun* aimTask = reinterpret_cast<CTaskAimGun*>(task);
-				rage::Vec3V aimStartPos = origStartPos, aimEndPos = origEndPos;
-				aimTask->DoShapeTest(entity, &aimStartPos, &aimEndPos, nullptr, nullptr, false);
+				CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
+			}
 
-				const rage::Vec3V origDir = (origEndPos - origStartPos).Normalized();
-				const rage::Vec3V aimDir = (aimEndPos - aimStartPos).Normalized();
+			CCoronas::Instance()->Draw(startPos, info->CoronaSize, info->CoronaColor, info->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
+			
+			//CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
+			if (isPlayer && false)
+			{
+				constexpr uint32_t CTaskAimGunOnFoot = 4;
+				constexpr uint32_t CTaskAimGunVehicleDriveBy = 295;
+				constexpr uint32_t CTaskAimGunBlindFire = 304;
 
-				const float angleCos = origDir.Dot(aimDir);
-				const float angleDegrees = acosf(angleCos) * 180.0f / 3.1415926f;
-				if (angleDegrees < 17.5f)
+				rage::aiTaskTree* taskTree = GetPedTaskTree(entity);
+				rage::aiTask* task = nullptr;
+				if ((task = taskTree->FindTaskByTypeActive(CTaskAimGunOnFoot)) ||
+					(task = taskTree->FindTaskByTypeActive(CTaskAimGunVehicleDriveBy)) ||
+					(task = taskTree->FindTaskByTypeActive(CTaskAimGunBlindFire)))
 				{
-					// only use aiming direction if it is close enough to the component direction
-					// to avoid visual issues in first person/rolling/etc.
-					startPos = aimStartPos;
-					endPos = aimEndPos;
+					CTaskAimGun* aimTask = reinterpret_cast<CTaskAimGun*>(task);
+					rage::Vec3V aimStartPos = origStartPos, aimEndPos = origEndPos;
+					bool s = aimTask->DoShapeTest(entity, &aimStartPos, &aimEndPos, nullptr, nullptr, false);
+
+					const rage::Vec3V origDir = (origEndPos - origStartPos).Normalized();
+					const rage::Vec3V aimDir = (aimEndPos - aimStartPos).Normalized();
+
+					const float angleCos = origDir.Dot(aimDir);
+					const float angleDegrees = acosf(angleCos) * 180.0f / 3.1415926f;
+					//if (angleDegrees < 17.5f)
+					{
+						// only use aiming direction if it is close enough to the component direction
+						// to avoid visual issues in first person/rolling/etc.
+						//startPos = aimStartPos;
+						endPos = aimEndPos;
+					}
+					//CScriptIM_DrawLine(startPos, endPos, s ? 0xFF00FF00 : 0xFF0000FF);
 				}
 			}
 		}
+
+		Replay::RecordLaserSightState(GetWeaponObject(This), true, endPos - startPos);
 
 		{
 			static WorldProbe::CShapeTestResults results{ 4 };
@@ -268,7 +284,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		}
 
 		{
-			startPos = boneMtx.Position();
+			//startPos = boneMtx.Position();
 			const rage::Mat34V& camMtx = camBaseCamera::GetCurrentCamera()->GetTransform();
 
 			// based on arbitrary axis billboards: http://nehe.gamedev.net/article/billboarding_how_to/18011/

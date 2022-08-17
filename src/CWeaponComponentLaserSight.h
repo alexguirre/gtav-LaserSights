@@ -61,11 +61,7 @@ public:
 	uint8_t padding_3C[0x4];
 	WorldProbe::CShapeTestResults* m_RaycastResult;
 	rage::Vec3V* m_RaycastHitPosition;
-	union
-	{
-		bool m_HasRaycastHit;
-		bool m_IsOff; // re-use field above to store whether the laser is toggled
-	};
+	bool m_HasRaycastHit;
 	uint8_t padding_51[0x7];
 
 	virtual bool GetIsClassId(uint32_t classId) = 0;
@@ -76,5 +72,21 @@ public:
 	virtual void ApplyAccuracyModifier(float*) = 0;
 	virtual void ApplyDamageModifier(float*) = 0;
 	virtual void ApplyFallOffModifier(float*, float*) = 0;
+
+	// extensions re-using existing unused fields
+	struct StateEx { uint8_t IsOff : 1, IsInReplay : 1; }; static_assert(sizeof(StateEx) == sizeof(bool));
+	inline StateEx& State() { return reinterpret_cast<StateEx&>(m_HasRaycastHit); }
+	inline const rage::Vec3V& GetReplayDiff() const
+	{
+		static const rage::Vec3V Zero{};
+		return m_RaycastHitPosition ? *m_RaycastHitPosition : Zero;
+	}
+	inline void SetReplayDiff(const rage::Vec3V& diff)
+	{
+		if (m_RaycastHitPosition)
+		{
+			*m_RaycastHitPosition = diff;
+		}
+	}
 };
 static_assert(sizeof(CWeaponComponentLaserSight) == 0x58);

@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 
+namespace rage { class fwEntity; }
+
 class CReplay
 {
 public:
@@ -13,9 +15,8 @@ public:
 	uint16_t typeId;
 	uint8_t field_2;
 	uint8_t flags;
-	uint16_t size;
-	uint8_t sizeHi;
-	uint8_t field_7;
+	uint32_t size : 24;
+	uint32_t field_7 : 8;
 	uint32_t field_8;
 	uint32_t field_C;
 	uint32_t gameTime;
@@ -34,6 +35,6 @@ public:
 
 	CPacketWeaponFlashLight();
 
-	void AddToRecording(class CEntity* const* entities, bool dontAddToMonitorBuffers, bool forceAddPacket);
+	void AddToRecording(rage::fwEntity* const* entities, bool dontAddToMonitorBuffers, bool forceAddPacket);
 };
 static_assert(sizeof(CPacketWeaponFlashLight) == 0x20);

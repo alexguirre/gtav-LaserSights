@@ -10,7 +10,6 @@ CPacketWeaponFlashLight::CPacketWeaponFlashLight()
 {
 	// CPacket
 	size = sizeof(CPacketWeaponFlashLight);
-	sizeHi = 0;
 	typeId = 102; // 102 = CPacketWeaponFlashLight
 	field_8 = 0xAAAAAAAA;
 	field_7 = 0;
@@ -25,7 +24,7 @@ CPacketWeaponFlashLight::CPacketWeaponFlashLight()
 	unkFlags = 0;
 }
 
-void CPacketWeaponFlashLight::AddToRecording(CEntity* const* entities, bool dontAddToMonitorBuffers, bool forceAddPacket)
+void CPacketWeaponFlashLight::AddToRecording(rage::fwEntity* const* entities, bool dontAddToMonitorBuffers, bool forceAddPacket)
 {
-	reinterpret_cast<void(*)(CPacketWeaponFlashLight*, CEntity* const*, bool, bool)>(Addresses.CPacketWeaponFlashLight_AddToRecording)(this, entities, dontAddToMonitorBuffers, forceAddPacket);
+	reinterpret_cast<void(*)(CPacketWeaponFlashLight*, rage::fwEntity* const*, bool, bool)>(Addresses.CPacketWeaponFlashLight_AddToRecording)(this, entities, dontAddToMonitorBuffers, forceAddPacket);
 }

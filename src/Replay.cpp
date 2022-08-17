@@ -6,6 +6,14 @@
 #include "CWeaponComponentLaserSight.h"
 #include <spdlog/spdlog.h>
 
+class CPacketWeaponLaserSight : public CPacketWeaponFlashLight
+{
+public:
+	rage::Vec3V diff; // start - end vector
+
+	CPacketWeaponLaserSight();
+};
+
 static void AllowWeaponComponentLaserSightRecording()
 {
 	// game only records CWeaponComponent creation if it is a flashlight or a scope,
@@ -89,11 +97,13 @@ static void HookPacketWeaponFlashLightReplayHandler()
 			}
 		}
 
-		static void LaserSightHandler(CPacketWeaponFlashLight* packet, CWeaponComponentLaserSight* laserSight)
+		static void LaserSightHandler(CPacketWeaponLaserSight* packet, CWeaponComponentLaserSight* laserSight)
 		{
 			if (laserSight)
 			{
-				laserSight->m_IsOff = !(packet->isOn & 1);
+				laserSight->State().IsInReplay = true;
+				laserSight->State().IsOff = (packet->isOn & 1) == 0;
+				laserSight->SetReplayDiff(packet->diff);
 			}
 		}
 	} stub;
@@ -102,29 +112,103 @@ static void HookPacketWeaponFlashLightReplayHandler()
 
 	auto stubCode = stub.GetCode();
 	auto stubCodeSize = stub.GetCodeSize();
-	assert(stubCodeSize <= StubMaxSize);
+	assert(stubCodeSize <= StubMaxSize && "HookPacketWeaponFlashLightReplayHandler stub too big");
 
 	memcpy(addr, stubCode, stubCodeSize);
+}
+
+static void PatchWeaponFlashLightAddToRecording()
+{
+	// patch CPacketWeaponFlashLight::AddToRecording to copy the whole CPacketWeaponLaserSight struct, not just the CPacketWeaponFlashLight part
+
+	static_assert(sizeof(CPacketWeaponLaserSight) == 0x30, "PatchWeaponFlashLightAddToRecording expects sizeof(CPacketWeaponLaserSight) to be 0x30");
+
+
+	int8_t* addr = (int8_t*)Addresses.CPacketWeaponFlashLight_AddToRecording;
+
+	assert(*(addr + 0x1A) == 0x40 && "Stack space expected to be 0x40, function changed?");
+	*(addr + 0x1A) = 0x50; // increase stack space from 0x40 to 0x50
+
+	constexpr int8_t PacketCopyVarOffset = -0x30;
+	struct : jitasm::Frontend
+	{
+		// the jmp(Reg64) from jitasm:: crashes when used, replacing I_JMP to I_CALL fixes it (and still produces a jmp instruction)
+		void jmp(const Reg64& dst) { AppendInstr(jitasm::I_CALL, 0xFF, 0, jitasm::Imm8(4), R(dst)); }
+
+		void InternalMain() override
+		{
+			lea(rcx, qword_ptr[rbp+PacketCopyVarOffset]); // dest
+			mov(rdx, rdi); // src
+			mov(rax, reinterpret_cast<uintptr_t>(&CopyPacket));
+			call(rax);
+			
+			xor(si, si);
+			xor(di, di);
+			mov(rax, reinterpret_cast<uintptr_t>(Addresses.CPacketWeaponFlashLight_AddToRecording)+0xD8);
+			jmp(rax);
+		}
+
+		static void CopyPacket(CPacketWeaponFlashLight* dest, CPacketWeaponFlashLight* src)
+		{
+			if (src->unkFlags & IsLaserSightStatePacketFlag)
+			{
+				*reinterpret_cast<CPacketWeaponLaserSight*>(dest) = *reinterpret_cast<CPacketWeaponLaserSight*>(src);
+			}
+			else
+			{
+				*dest = *src;
+			}
+		}
+	} stub;
+
+	constexpr size_t StubMaxSize = 0x35;
+
+	auto stubCode = stub.GetCode();
+	auto stubCodeSize = stub.GetCodeSize();
+	assert(stubCodeSize <= StubMaxSize && "HookPacketWeaponFlashLightReplayHandler stub too big");
+	
+	memcpy(addr + 0xA3, stubCode, stubCodeSize);
+	
+	// apply the new stack offset to the remaining code
+	*(addr + 0xDF) = PacketCopyVarOffset;
+	*(addr + 0xFE) = PacketCopyVarOffset + offsetof(CPacketWeaponLaserSight, field_8);
+	*(addr + 0x107) = PacketCopyVarOffset + offsetof(CPacketWeaponLaserSight, field_C);
+	*(addr + 0x110) = PacketCopyVarOffset + offsetof(CPacketWeaponLaserSight, weaponObjectReplayId);
+	*(addr + 0x124) = PacketCopyVarOffset + offsetof(CPacketWeaponLaserSight, typeId);
+	*(addr + 0x15B) = PacketCopyVarOffset;
+
+	// epilogue
+	*(addr + 0x17A) = 0x70;
+	*(addr + 0x17F) = 0x78;
+	*(addr + 0x184) = 0x80;
+	*(addr + 0x18A) = 0x50;
 }
 
 bool Replay::InstallHooks()
 {
 	AllowWeaponComponentLaserSightRecording();
 	HookPacketWeaponFlashLightReplayHandler();
+	PatchWeaponFlashLightAddToRecording();
 	return true;
 }
 
-void Replay::RecordLaserSightState(rage::fwEntity* weaponObject, bool isOn)
+void Replay::RecordLaserSightState(rage::fwEntity* weaponObject, bool isOn, const rage::Vec3V& diff)
 {
 	if (CReplay::IsRecordingActive())
 	{
-		CPacketWeaponFlashLight packet{};
-		packet.isOn = isOn;
+		CPacketWeaponLaserSight packet{};
+		packet.isOn = isOn ? 1 : 0;
 		packet.unkFlags |= IsLaserSightStatePacketFlag;
-		CEntity* entities[]{ reinterpret_cast<CEntity*>(weaponObject), nullptr };
+		packet.diff = diff;
+		rage::fwEntity* const entities[]{ weaponObject, nullptr };
 		if (entities[0])
 		{
 			packet.AddToRecording(entities, false, false);
 		}
 	}
+}
+
+CPacketWeaponLaserSight::CPacketWeaponLaserSight() : CPacketWeaponFlashLight()
+{
+	size = sizeof(CWeaponComponentLaserSight);
 }
