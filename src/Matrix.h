@@ -1,4 +1,5 @@
 #pragma once
+#include <DirectXMath.h>
 #include "Vector.h"
 
 namespace rage
@@ -9,6 +10,7 @@ namespace rage
 		{
 			float m[4][4];
 			Vec3V r[4];
+			DirectX::XMMATRIX x;
 		};
 
 		inline Mat34V() : r{ {}, {}, {}, {} } {}
@@ -21,6 +23,8 @@ namespace rage
 		inline Mat34V(__m128 r0, __m128 r1, __m128 r2, __m128 r3) : r{ r0, r1, r2, r3 } {}
 
 		inline Mat34V(const Mat34V& v) : r{ v.r[0], v.r[1], v.r[2], v.r[3] } {}
+
+		inline Mat34V(DirectX::FXMMATRIX x) : x{ x } {}
 
 		inline Mat34V& operator=(const Mat34V& other)
 		{

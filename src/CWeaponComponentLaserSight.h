@@ -60,7 +60,7 @@ public:
 	float m_38;
 	uint8_t padding_3C[0x4];
 	WorldProbe::CShapeTestResults* m_RaycastResult;
-	rage::Vec3V* m_RaycastHitPosition;
+	rage::Vec4V* m_RaycastHitPosition;
 	bool m_HasRaycastHit;
 	uint8_t padding_51[0x7];
 
@@ -76,12 +76,12 @@ public:
 	// extensions re-using existing unused fields
 	struct StateEx { uint8_t IsOff : 1, IsInReplay : 1; }; static_assert(sizeof(StateEx) == sizeof(bool));
 	inline StateEx& State() { return reinterpret_cast<StateEx&>(m_HasRaycastHit); }
-	inline const rage::Vec3V& GetReplayDiff() const
+	inline const rage::Vec4V& GetReplayDirAndLength() const
 	{
-		static const rage::Vec3V Zero{};
+		static const rage::Vec4V Zero{};
 		return m_RaycastHitPosition ? *m_RaycastHitPosition : Zero;
 	}
-	inline void SetReplayDiff(const rage::Vec3V& diff)
+	inline void SetReplayDirAndLength(const rage::Vec4V& diff)
 	{
 		if (m_RaycastHitPosition)
 		{

@@ -9,7 +9,7 @@
 class CPacketWeaponLaserSight : public CPacketWeaponFlashLight
 {
 public:
-	rage::Vec3V diff; // start - end vector
+	rage::Vec4V dirAndLength;
 
 	CPacketWeaponLaserSight();
 };
@@ -103,7 +103,7 @@ static void HookPacketWeaponFlashLightReplayHandler()
 			{
 				laserSight->State().IsInReplay = true;
 				laserSight->State().IsOff = (packet->isOn & 1) == 0;
-				laserSight->SetReplayDiff(packet->diff);
+				laserSight->SetReplayDirAndLength(packet->dirAndLength);
 			}
 		}
 	} stub;
@@ -127,9 +127,10 @@ static void PatchWeaponFlashLightAddToRecording()
 	int8_t* addr = (int8_t*)Addresses.CPacketWeaponFlashLight_AddToRecording;
 
 	assert(*(addr + 0x1A) == 0x40 && "Stack space expected to be 0x40, function changed?");
-	*(addr + 0x1A) = 0x50; // increase stack space from 0x40 to 0x50
+	constexpr int8_t NewStackSpace = sizeof(CPacketWeaponLaserSight) + 0x20;
+	*(addr + 0x1A) = NewStackSpace; // increase stack space from 0x40 (sizeof(CPacketFlashLight)+0x20)
 
-	constexpr int8_t PacketCopyVarOffset = -0x30;
+	constexpr int8_t PacketCopyVarOffset = -(int8_t)sizeof(CPacketWeaponLaserSight);
 	struct : jitasm::Frontend
 	{
 		// the jmp(Reg64) from jitasm:: crashes when used, replacing I_JMP to I_CALL fixes it (and still produces a jmp instruction)
@@ -178,10 +179,10 @@ static void PatchWeaponFlashLightAddToRecording()
 	*(addr + 0x15B) = PacketCopyVarOffset;
 
 	// epilogue
-	*(addr + 0x17A) = 0x70;
-	*(addr + 0x17F) = 0x78;
-	*(addr + 0x184) = 0x80;
-	*(addr + 0x18A) = 0x50;
+	*(addr + 0x17A) = NewStackSpace + 0x20;// 0x70;
+	*(addr + 0x17F) = NewStackSpace + 0x28;// 0x78;
+	*(addr + 0x184) = NewStackSpace + 0x30;// 0x80; FIXME: this ends up like `mov rdi, qword ptr [rsp - 0x80]` instead of `mov rdi, qword ptr [rsp + 0x80]`
+	*(addr + 0x18A) = NewStackSpace;
 }
 
 bool Replay::InstallHooks()
@@ -192,14 +193,14 @@ bool Replay::InstallHooks()
 	return true;
 }
 
-void Replay::RecordLaserSightState(rage::fwEntity* weaponObject, bool isOn, const rage::Vec3V& diff)
+void Replay::RecordLaserSightState(rage::fwEntity* weaponObject, bool isOn, const rage::Vec4V& dirAndLength)
 {
 	if (CReplay::IsRecordingActive())
 	{
 		CPacketWeaponLaserSight packet{};
 		packet.isOn = isOn ? 1 : 0;
 		packet.unkFlags |= IsLaserSightStatePacketFlag;
-		packet.diff = diff;
+		packet.dirAndLength = dirAndLength;
 		rage::fwEntity* const entities[]{ weaponObject, nullptr };
 		if (entities[0])
 		{

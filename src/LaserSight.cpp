@@ -92,6 +92,14 @@ static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end,
 	reinterpret_cast<decltype(&CScriptIM_DrawLine)>(Addresses.CScriptIM_DrawLine)(start, end, color);
 }
 
+static void CleanMat34V(rage::Mat34V& m)
+{
+	m.m[0][3] = 0.0f;
+	m.m[1][3] = 0.0f;
+	m.m[2][3] = 0.0f;
+	m.m[3][3] = 1.0f;
+}
+
 static rage::aiTaskTree* GetPedTaskTree(rage::fwEntity* ped)
 {
 	// TODO: get offsets from patterns
@@ -168,6 +176,8 @@ static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight
 static void(*CWeaponComponentLaserSight_ProcessPostPreRender_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
 static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponComponentLaserSight* This, rage::fwEntity* entity)
 {
+	using namespace DirectX;
+
 	if (!IsLaserVisible(This))
 	{
 		if (This->m_OwnerWeapon)
@@ -186,8 +196,18 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 		if (This->State().IsInReplay)
 		{
+			using namespace DirectX;
+			// convert the direction from local space to world space
+			
+			rage::Vec4V dirAndLength = This->GetReplayDirAndLength();
+			float length = dirAndLength.w;
+			rage::Vec3V dir = { dirAndLength.x, dirAndLength.y, dirAndLength.z };
+			rage::Mat34V boneMtxClean = boneMtx;
+			CleanMat34V(boneMtxClean);
+			dir = XMVector3TransformNormal(dir.v, boneMtxClean.x);
+
 			startPos = boneMtx.Position();
-			endPos = startPos + This->GetReplayDiff();
+			endPos = startPos + dir * length;
 
 			//CScriptIM_DrawLine(startPos, endPos, 0xFFFF00FF);
 		}
@@ -211,7 +231,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			CCoronas::Instance()->Draw(startPos, info->CoronaSize, info->CoronaColor, info->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
 			
 			//CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
-			if (isPlayer && false)
+			if (isPlayer)
 			{
 				constexpr uint32_t CTaskAimGunOnFoot = 4;
 				constexpr uint32_t CTaskAimGunVehicleDriveBy = 295;
@@ -244,7 +264,17 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			}
 		}
 
-		Replay::RecordLaserSightState(GetWeaponObject(This), true, endPos - startPos);
+		{
+			// convert the direction from world space to local space
+			rage::Vec3V dir = (endPos - startPos);
+			float length = dir.Length();
+			dir /= length;
+			rage::Mat34V boneMtxInv = boneMtx;
+			CleanMat34V(boneMtxInv);
+			boneMtxInv = XMMatrixInverse(nullptr, boneMtxInv.x);
+			dir = XMVector3TransformNormal(dir.v, boneMtxInv.x);
+			Replay::RecordLaserSightState(GetWeaponObject(This), true, { dir.x, dir.y, dir.z, length });
+		}
 
 		{
 			static WorldProbe::CShapeTestResults results{ 4 };
