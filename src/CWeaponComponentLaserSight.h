@@ -4,6 +4,8 @@
 #include "fwEntity.h"
 #include "WorldProbe.h"
 
+class CWeapon;
+
 class CWeaponBoneId
 {
 public:
@@ -49,7 +51,7 @@ class CWeaponComponentLaserSight
 {
 public:
 	CWeaponComponentLaserSightInfo* m_ComponentInfo;
-	void* m_OwnerWeapon; // actually CWeapon*
+	CWeapon* m_OwnerWeapon;
 	rage::fwEntity* m_ComponentObject;
 	uint64_t m_20;
 	uint16_t m_28;

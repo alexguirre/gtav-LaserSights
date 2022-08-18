@@ -57,10 +57,10 @@ namespace WorldProbe
 		m_Type = eShapeTestType::Probe;
 	}
 
-	bool CShapeTestManager::SubmitTest(CShapeTestDesc& desc, bool unk)
+	bool CShapeTestManager::SubmitTest(CShapeTestDesc& desc, bool async)
 	{
 		using Fn = bool(*)(CShapeTestManager*, CShapeTestDesc&, bool);
-		return reinterpret_cast<Fn>(Addresses.WorldProbe_CShapeTestManager_SubmitTest)(this, desc, unk);
+		return reinterpret_cast<Fn>(Addresses.WorldProbe_CShapeTestManager_SubmitTest)(this, desc, async);
 	}
 
 	CShapeTestManager* GetShapeTestManager()

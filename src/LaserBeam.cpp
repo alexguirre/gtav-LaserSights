@@ -399,7 +399,7 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 		{ 0, rage::grcVertexElement::SemanticName::COLOR,    0, 12, rage::grcVertexElement::Format::R32G32B32_FLOAT,    0, 0 },
 		{ 0, rage::grcVertexElement::SemanticName::TEXCOORD, 0, 8,  rage::grcVertexElement::Format::R32G32_FLOAT,       0, 0 },
 	};
-	g_LaserBeam.VertexDecls.LaserBeam = rage::grcDevice::CreateVertexDeclaration(laserBeamVertexElements, ARRAYSIZE(laserBeamVertexElements));
+	g_LaserBeam.VertexDecls.LaserBeam = rage::grcDevice::CreateVertexDeclaration(laserBeamVertexElements, std::size(laserBeamVertexElements));
 
 	spdlog::debug("Vertex Declarations:");
 	spdlog::debug("  LaserBeam:{}", reinterpret_cast<void*>(g_LaserBeam.VertexDecls.LaserBeam));

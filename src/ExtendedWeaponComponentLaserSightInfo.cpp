@@ -50,7 +50,6 @@ MEMBER_DATA_FLOAT(BeamRange);
 MEMBER_DATA_VEC3V(Color);
 MEMBER_DATA_UINT(CoronaColor);
 MEMBER_DATA_BOOL(IR);
-MEMBER_DATA_BOOL(DebugLines);
 
 rage::parMemberCommonData* ExtendedWeaponComponentLaserSightInfo::MemberData[NumMembers + 1]
 {
@@ -64,7 +63,6 @@ rage::parMemberCommonData* ExtendedWeaponComponentLaserSightInfo::MemberData[Num
 	DATA_PTR(Color),
 	DATA_PTR(CoronaColor),
 	DATA_PTR(IR),
-	DATA_PTR(DebugLines),
 
 	nullptr // null terminator
 };
@@ -81,7 +79,6 @@ uint32_t ExtendedWeaponComponentLaserSightInfo::MemberOffsets[NumMembers]
 	OFFSET(Color),
 	OFFSET(CoronaColor),
 	OFFSET(IR),
-	OFFSET(DebugLines),
 };
 
 static rage::parMemberCommonData** origMemberData;

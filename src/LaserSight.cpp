@@ -1,4 +1,5 @@
 #include "LaserSight.h"
+#include "CWeapon.h"
 #include "CWeaponComponentLaserSight.h"
 #include "CCoronas.h"
 #include <spdlog/spdlog.h>
@@ -208,8 +209,6 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 			startPos = boneMtx.Position();
 			endPos = startPos + dir * length;
-
-			//CScriptIM_DrawLine(startPos, endPos, 0xFFFF00FF);
 		}
 		else
 		{
@@ -223,14 +222,8 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			startPos = origStartPos;
 			endPos = origEndPos;
 
-			if (info->DebugLines)
-			{
-				CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
-			}
-
 			CCoronas::Instance()->Draw(startPos, info->CoronaSize, info->CoronaColor, info->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
-			
-			//CScriptIM_DrawLine(startPos, endPos, 0xFFFF0000);
+
 			if (isPlayer)
 			{
 				constexpr uint32_t CTaskAimGunOnFoot = 4;
@@ -244,8 +237,13 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 					(task = taskTree->FindTaskByTypeActive(CTaskAimGunBlindFire)))
 				{
 					CTaskAimGun* aimTask = reinterpret_cast<CTaskAimGun*>(task);
-					rage::Vec3V aimStartPos = origStartPos, aimEndPos = origEndPos;
-					bool s = aimTask->DoShapeTest(entity, &aimStartPos, &aimEndPos, nullptr, nullptr, false);
+					rage::Vec3V aimStartPos, aimEndPos;
+					bool s = aimTask->DoShapeTest(entity, &aimStartPos, &aimEndPos, nullptr, nullptr, true);
+
+					const rage::Vec3V& weaponPos = This->m_OwnerWeapon->Position;
+
+					CScriptIM_DrawLine(weaponPos, aimEndPos, s ? 0xFF00FF00 : 0xFF0000FF);
+					//CScriptIM_DrawLine(aimStartPos+rage::Vec3V(1.0f,1.0f,1.0f), aimEndPos+rage::Vec3V(1.0f,1.0f,1.0f), s ? 0xFF00FF00 : 0xFF0000FF);
 
 					const rage::Vec3V origDir = (origEndPos - origStartPos).Normalized();
 					const rage::Vec3V aimDir = (aimEndPos - aimStartPos).Normalized();
@@ -277,12 +275,12 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		}
 
 		{
-			static WorldProbe::CShapeTestResults results{ 4 };
+			static WorldProbe::CShapeTestResults results{ 16 };
 
 			results.AbortTest();
 			WorldProbe::CShapeTestProbeDesc desc;
 			const rage::fwEntity* excludeEntities[]{ This->m_ComponentObject, GetWeaponObject(This) };
-			desc.SetExcludeEntities(excludeEntities, ARRAYSIZE(excludeEntities), 0);
+			desc.SetExcludeEntities(excludeEntities, std::size(excludeEntities), 0);
 			desc.SetResultsStructure(&results);
 			// TODO: find more appropriate shapetest flags
 			desc.m_Flags1 = g_Config.ShapeTestFlags1;
@@ -290,11 +288,6 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			desc.m_Start = startPos;
 			desc.m_End = endPos;
 			desc.m_84C = 8;
-
-			if (info->DebugLines)
-			{
-				CScriptIM_DrawLine(startPos, endPos, 0xFF00FF00);
-			}
 
 			WorldProbe::GetShapeTestManager()->SubmitTest(desc, false);
 
@@ -322,11 +315,6 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			const rage::Vec3V look = camMtx.Position() - center;
 			const rage::Vec3V up = (endPos - startPos).Normalized();
 			const rage::Vec3V right = up.Cross(look).Normalized();
-
-			if (info->DebugLines)
-			{
-				CScriptIM_DrawLine(startPos, endPos, 0xFF0000FF);
-			}
 
 			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right, info->Color);
 		}
