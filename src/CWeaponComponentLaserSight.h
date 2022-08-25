@@ -3,6 +3,7 @@
 #include "Vector.h"
 #include "fwEntity.h"
 #include "WorldProbe.h"
+#include <unordered_map>
 
 class CWeapon;
 
@@ -62,7 +63,7 @@ public:
 	float m_38;
 	uint8_t padding_3C[0x4];
 	WorldProbe::CShapeTestResults* m_RaycastResult;
-	rage::Vec4V* m_RaycastHitPosition;
+	rage::Vec3V* m_RaycastHitPosition;
 	bool m_HasRaycastHit;
 	uint8_t padding_51[0x7];
 
@@ -76,14 +77,27 @@ public:
 	virtual void ApplyFallOffModifier(float*, float*) = 0;
 
 	// extensions re-using existing unused fields
-	struct StateEx { uint8_t IsOff : 1, IsInReplay : 1; }; static_assert(sizeof(StateEx) == sizeof(bool));
+	struct StateEx { uint8_t IsOff : 1, IsInReplay : 1, IsDataInitialized : 1; }; static_assert(sizeof(StateEx) == sizeof(bool));
 	inline StateEx& State() { return reinterpret_cast<StateEx&>(m_HasRaycastHit); }
-	inline const rage::Vec4V& GetReplayDirAndLength() const
+	struct DataEx
 	{
-		static const rage::Vec4V Zero{};
+		rage::Vec3V TargetDir;
+		rage::Vec3V CurrDir;
+	};
+	static_assert(sizeof(DataEx) <= (0x90 - 0x58)); // must fit in the pool slot
+	inline DataEx& Data()
+	{
+		static std::unordered_map<CWeaponComponentLaserSight*, DataEx> dataMap;
+		if (!State().IsDataInitialized) { dataMap[this] = {}; State().IsDataInitialized = true; }
+		return dataMap[this];
+	}
+
+	inline const rage::Vec3V& GetReplayDir() const
+	{
+		static const rage::Vec3V Zero{};
 		return m_RaycastHitPosition ? *m_RaycastHitPosition : Zero;
 	}
-	inline void SetReplayDirAndLength(const rage::Vec4V& diff)
+	inline void SetReplayDir(const rage::Vec3V& diff)
 	{
 		if (m_RaycastHitPosition)
 		{

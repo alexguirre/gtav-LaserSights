@@ -64,8 +64,8 @@ namespace WorldProbe
 			uint32_t padding;
 		} m_Unk;
 		uint32_t m_Flags1;
-		uint32_t m_Flags2;
-		uint32_t m_838;
+		uint32_t m_TypeFlags;
+		uint32_t m_IncludeFlags;
 		uint8_t m_83C;
 		uint8_t padding_83D[0x3];
 		uint32_t m_MaxResultHits;
@@ -100,7 +100,7 @@ namespace WorldProbe
 	class CShapeTestManager
 	{
 	public:
-		bool SubmitTest(CShapeTestDesc& desc, bool a3);
+		bool SubmitTest(CShapeTestDesc& desc, bool async);
 	};
 
 	CShapeTestManager* GetShapeTestManager();

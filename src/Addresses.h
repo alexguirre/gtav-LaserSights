@@ -63,6 +63,7 @@ public:
 	void* addUpdateLightBuffersToRenderCommand = nullptr;
 	void* resetSceneLights = nullptr;
 	void* DepthBufferPreAlpha = nullptr;
+	void* fwEntity_GetBoneIndex = nullptr;
 
 	bool Init();
 };

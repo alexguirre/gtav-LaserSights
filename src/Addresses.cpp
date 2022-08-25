@@ -206,6 +206,8 @@ bool AddressManager::Init()
 	res &= Find(resetSceneLights, "8B 0D ? ? ? ? 8B 15 ? ? ? ? 33 ED FF C1 4C 8D 35 ? ? ? ? 89 2D", -0x19);
 
 	res &= FindRIP(DepthBufferPreAlpha, "48 8B 05 ? ? ? ? 33 D2 44 39 35 ? ? ? ? 76 2D 4C 8D 8D", 3);
+	
+	res &= Find(fwEntity_GetBoneIndex, "48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B 01 83 4C 24", 0);
 
 	return res;
 }

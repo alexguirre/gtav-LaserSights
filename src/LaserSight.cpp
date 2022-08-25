@@ -12,80 +12,51 @@
 #include "Replay.h"
 #include <filesystem>
 #include "Resources.h"
+#include "fwTimer.h"
+
+enum : uint32_t
+{
+    NONE = 0u,
+    UNKNOWN = 1u,
+    MAP_WEAPON = 1u << 1,
+    MAP_DYNAMIC = 1u << 2,
+    MAP_ANIMAL = 1u << 3,
+    MAP_COVER = 1u << 4,
+    MAP_VEHICLE = 1u << 5,
+    VEHICLE_NOT_BVH = 1u << 6,
+    VEHICLE_BVH = 1u << 7,
+    VEHICLE_BOX = 1u << 8,
+    PED = 1u << 9,
+    RAGDOLL = 1u << 10,
+    ANIMAL = 1u << 11,
+    ANIMAL_RAGDOLL = 1u << 12,
+    OBJECT = 1u << 13,
+    OBJECT_ENV_CLOTH = 1u << 14,
+    PLANT = 1u << 15,
+    PROJECTILE = 1u << 16,
+    EXPLOSION = 1u << 17,
+    PICKUP = 1u << 18,
+    FOLIAGE = 1u << 19,
+    FORKLIFT_FORKS = 1u << 20,
+    TEST_WEAPON = 1u << 21,
+    TEST_CAMERA = 1u << 22,
+    TEST_AI = 1u << 23,
+    TEST_SCRIPT = 1u << 24,
+    TEST_VEHICLE_WHEEL = 1u << 25,
+    GLASS = 1u << 26,
+    MAP_RIVER = 1u << 27,
+    SMOKE = 1u << 28,
+    UNSMASHED = 1u << 29,
+    MAP_STAIRS = 1u << 30,
+    MAP_DEEP_SURFACE = 1u << 31,
+};
 
 static struct Config
 {
 	uint32_t ShapeTestFlags1 = 0x100;
-	uint32_t ShapeTestFlags2 = 0xE1134C2;
+	uint32_t ShapeTestFlags2 = 
+		0xE1134C2; // MAP_WEAPON, VEHICLE_NOT_BVH, VEHICLE_BVH, RAGDOLL, ANIMAL_RAGDOLL, OBJECT, PROJECTILE, FORKLIFT_FORKS, TEST_VEHICLE_WHEEL, GLASS, MAP_RIVER
 } g_Config;
-
-static constexpr bool ConfigHotReloadEnabled
-{
-#if _DEBUG
-	true
-#else
-	false
-#endif
-};
-
-static void LoadConfig(const char* path)
-{
-	spdlog::debug("Loading config {}", path);
-
-	std::string strShapeTestFlags1(512, '\0'), strShapeTestFlags2(512, '\0');
-	strShapeTestFlags1.resize(GetPrivateProfileString("Config", "ShapeTestFlags1", "0", strShapeTestFlags1.data(), strShapeTestFlags1.size(), path));
-	strShapeTestFlags1.resize(GetPrivateProfileString("Config", "ShapeTestFlags2", "0", strShapeTestFlags2.data(), strShapeTestFlags2.size(), path));
-	spdlog::debug(" > strShapeTestFlags1 = {}", strShapeTestFlags1);
-	spdlog::debug(" > strShapeTestFlags2 = {}", strShapeTestFlags2);
-
-	g_Config.ShapeTestFlags1 = std::stoul(strShapeTestFlags1, nullptr, 0);
-	g_Config.ShapeTestFlags2 = std::stoul(strShapeTestFlags2, nullptr, 0);
-	spdlog::debug(" > g_Config.ShapeTestFlags1 = 0x{:X}", g_Config.ShapeTestFlags1);
-	spdlog::debug(" > g_Config.ShapeTestFlags2 = 0x{:X}", g_Config.ShapeTestFlags2);
-}
-
-static DWORD ConfigFileWatcher(LPVOID)
-{
-	char dirPath[MAX_PATH], filePath[MAX_PATH];
-	GetFullPathName(".\\", MAX_PATH, dirPath, NULL);
-	GetFullPathName(".\\" LASERSIGHTS_FILENAME ".ini", MAX_PATH, filePath, NULL);
-	HANDLE handle = FindFirstChangeNotification(dirPath, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE);
-	if (handle == INVALID_HANDLE_VALUE)
-	{
-		spdlog::debug("Failed to create config file watcher");
-		return 0;
-	}
-
-	auto prevWriteTime = std::filesystem::last_write_time(filePath);
-
-	while (true)
-	{
-		switch (WaitForSingleObject(handle, INFINITE))
-		{
-		case WAIT_OBJECT_0:
-			const auto newWriteTime = std::filesystem::last_write_time(filePath);
-			if (prevWriteTime != newWriteTime)
-			{
-				LoadConfig(filePath);
-				prevWriteTime = newWriteTime;
-			}
-
-			if (!FindNextChangeNotification(handle))
-			{
-				spdlog::debug("FindNextChangeNotification failed");
-				FindCloseChangeNotification(handle);
-				return 0;
-			}
-			break;
-		}
-	}
-}
-
-static void StartConfigFileWatcher()
-{
-	HANDLE h = CreateThread(NULL, 0, &ConfigFileWatcher, NULL, 0, NULL);
-	CloseHandle(h);
-}
 
 // NOTE: CScriptIM::DrawLine crashes if called during R* Editor export
 static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end, uint32_t color)
@@ -163,8 +134,8 @@ static rage::fwEntity* GetWeaponObject(CWeaponComponentLaserSight* sight)
 	return *reinterpret_cast<rage::fwEntity**>(reinterpret_cast<uint8_t*>(sight->m_OwnerWeapon) + 0x58);
 }
 
-static void(*CWeaponComponentLaserSight_Process_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
-static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight* This, rage::fwEntity* entity)
+static void(*CWeaponComponentLaserSight_Process_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* ped);
+static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight* This, rage::fwEntity* ped)
 {
 	if (IsContextPressed())
 	{
@@ -174,8 +145,8 @@ static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight
 	}
 }
 
-static void(*CWeaponComponentLaserSight_ProcessPostPreRender_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* entity);
-static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponComponentLaserSight* This, rage::fwEntity* entity)
+static void(*CWeaponComponentLaserSight_ProcessPostPreRender_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* ped);
+static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponComponentLaserSight* This, rage::fwEntity* ped)
 {
 	using namespace DirectX;
 
@@ -193,44 +164,35 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		const auto* info = reinterpret_cast<ExtendedWeaponComponentLaserSightInfo*>(This->m_ComponentInfo);
 		rage::Mat34V boneMtx;
 		This->m_ComponentObject->GetGlobalMtx(This->m_LaserSightBoneIndex, &boneMtx);
-		rage::Vec3V startPos, endPos;
 
+		CCoronas::Instance()->Draw(boneMtx.Position(), info->CoronaSize, info->CoronaColor, info->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
+		
+		rage::Vec3V newTargetDir;
 		if (This->State().IsInReplay)
 		{
 			using namespace DirectX;
 			// convert the direction from local space to world space
 			
-			rage::Vec4V dirAndLength = This->GetReplayDirAndLength();
-			float length = dirAndLength.w;
-			rage::Vec3V dir = { dirAndLength.x, dirAndLength.y, dirAndLength.z };
+			rage::Vec3V dir = This->GetReplayDir();
 			rage::Mat34V boneMtxClean = boneMtx;
 			CleanMat34V(boneMtxClean);
-			dir = XMVector3TransformNormal(dir.v, boneMtxClean.x);
-
-			startPos = boneMtx.Position();
-			endPos = startPos + dir * length;
+			newTargetDir = XMVector3TransformNormal(dir.v, boneMtxClean.x);
 		}
 		else
 		{
 			// TODO: replace hardcoded offset
 			constexpr int PlayerInfoOffset = 0x10C8; // b2699
-			const bool isPlayer = entity && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(entity) + PlayerInfoOffset));
+			const bool isPlayer = ped && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(ped) + PlayerInfoOffset));
 
-			const rage::Vec3V origStartPos = boneMtx.Position();
-			const rage::Vec3V origEndPos = origStartPos + boneMtx.Forward() * info->BeamRange;
+			newTargetDir = boneMtx.Forward();
 
-			startPos = origStartPos;
-			endPos = origEndPos;
-
-			CCoronas::Instance()->Draw(startPos, info->CoronaSize, info->CoronaColor, info->CoronaIntensity, 100.0f, boneMtx.Forward(), 1.0f, 30.0f, 35.0f, 3);
-
-			if (isPlayer)
+			if (ped /*&& isPlayer*/ && false)
 			{
 				constexpr uint32_t CTaskAimGunOnFoot = 4;
 				constexpr uint32_t CTaskAimGunVehicleDriveBy = 295;
 				constexpr uint32_t CTaskAimGunBlindFire = 304;
 
-				rage::aiTaskTree* taskTree = GetPedTaskTree(entity);
+				rage::aiTaskTree* taskTree = GetPedTaskTree(ped);
 				rage::aiTask* task = nullptr;
 				if ((task = taskTree->FindTaskByTypeActive(CTaskAimGunOnFoot)) ||
 					(task = taskTree->FindTaskByTypeActive(CTaskAimGunVehicleDriveBy)) ||
@@ -238,41 +200,64 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 				{
 					CTaskAimGun* aimTask = reinterpret_cast<CTaskAimGun*>(task);
 					rage::Vec3V aimStartPos, aimEndPos;
-					bool s = aimTask->DoShapeTest(entity, &aimStartPos, &aimEndPos, nullptr, nullptr, true);
+					bool s = aimTask->DoShapeTest(ped, &aimStartPos, &aimEndPos, nullptr, nullptr, true);
 
-					const rage::Vec3V& weaponPos = This->m_OwnerWeapon->Position;
+					uint32_t muzzleBoneIndex = This->m_OwnerWeapon->OwnerObject->GetBoneIndex(17833/*Gun_Muzzle*/);
+					rage::Mat34V muzzleMtx;
+					This->m_OwnerWeapon->OwnerObject->GetGlobalMtx(muzzleBoneIndex, &muzzleMtx);
 
-					CScriptIM_DrawLine(weaponPos, aimEndPos, s ? 0xFF00FF00 : 0xFF0000FF);
+					//CScriptIM_DrawLine(muzzleMtx.Position(), aimEndPos, s ? 0xFF00FF00 : 0xFF0000FF);
 					//CScriptIM_DrawLine(aimStartPos+rage::Vec3V(1.0f,1.0f,1.0f), aimEndPos+rage::Vec3V(1.0f,1.0f,1.0f), s ? 0xFF00FF00 : 0xFF0000FF);
 
-					const rage::Vec3V origDir = (origEndPos - origStartPos).Normalized();
-					const rage::Vec3V aimDir = (aimEndPos - aimStartPos).Normalized();
+					//const rage::Vec3V origDir = (origEndPos - origStartPos).Normalized();
+					const rage::Vec3V aimDir = (aimEndPos - muzzleMtx.Position()).Normalized();
 
-					const float angleCos = origDir.Dot(aimDir);
-					const float angleDegrees = acosf(angleCos) * 180.0f / 3.1415926f;
+					//const float angleCos = origDir.Dot(aimDir);
+					//const float angleDegrees = acosf(angleCos) * 180.0f / 3.1415926f;
 					//if (angleDegrees < 17.5f)
 					{
 						// only use aiming direction if it is close enough to the component direction
 						// to avoid visual issues in first person/rolling/etc.
 						//startPos = aimStartPos;
-						endPos = aimEndPos;
+						//endPos = startPos + aimDir * info->BeamRange;
 					}
-					//CScriptIM_DrawLine(startPos, endPos, s ? 0xFF00FF00 : 0xFF0000FF);
+
+					newTargetDir = aimDir;
 				}
 			}
 		}
 
+		auto& d = This->Data();
+		d.TargetDir = newTargetDir;
+		//if (XMVector3Equal(XMVectorZero(), d.CurrDir.v))
+		{
+			d.CurrDir = d.TargetDir;
+		}
+		//else
+		//{
+		//	rage::Vec3V angleDiff = XMVector3AngleBetweenNormals(d.CurrDir.v, d.TargetDir.v);
+		//	if (!XMVector3Equal(XMVectorZero(), angleDiff.v) && !XMVector3IsNaN(angleDiff.v) && !XMVector3IsInfinite(angleDiff.v))
+		//	{
+		//		float t = 3.14f*2 * rage::fwTimer::GameTime().FrameTime / angleDiff.x;
+		//		t = std::min(t, 1.0f);
+		//		d.CurrDir = XMVectorLerp(d.CurrDir.v, d.TargetDir.v, t);
+		//		rage::Vec3V angleDiff2 = XMVector3AngleBetweenNormals(d.CurrDir.v, d.TargetDir.v);
+		//		spdlog::info("angleDiff:{} -> {},d.CurrDir:({},{},{})", angleDiff.x, angleDiff2.x, d.CurrDir.x, d.CurrDir.y, d.CurrDir.z);
+		//	}
+		//}
+
 		{
 			// convert the direction from world space to local space
-			rage::Vec3V dir = (endPos - startPos);
-			float length = dir.Length();
-			dir /= length;
+			rage::Vec3V dir = d.TargetDir;
 			rage::Mat34V boneMtxInv = boneMtx;
 			CleanMat34V(boneMtxInv);
 			boneMtxInv = XMMatrixInverse(nullptr, boneMtxInv.x);
 			dir = XMVector3TransformNormal(dir.v, boneMtxInv.x);
-			Replay::RecordLaserSightState(GetWeaponObject(This), true, { dir.x, dir.y, dir.z, length });
+			Replay::RecordLaserSightState(GetWeaponObject(This), true, dir);
 		}
+
+		rage::Vec3V startPos = boneMtx.Position();
+		rage::Vec3V endPos = startPos + d.CurrDir * info->BeamRange;
 
 		{
 			static WorldProbe::CShapeTestResults results{ 16 };
@@ -284,7 +269,8 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			desc.SetResultsStructure(&results);
 			// TODO: find more appropriate shapetest flags
 			desc.m_Flags1 = g_Config.ShapeTestFlags1;
-			desc.m_Flags2 = g_Config.ShapeTestFlags2;
+			desc.m_TypeFlags = g_Config.ShapeTestFlags2;
+			desc.m_IncludeFlags = 0xFFFFFFFF;
 			desc.m_Start = startPos;
 			desc.m_End = endPos;
 			desc.m_84C = 8;
@@ -344,11 +330,6 @@ bool LaserSight::InstallHooks()
 	vtable[3] = CWeaponComponentLaserSight_Process_detour;
 	vtable[4] = CWeaponComponentLaserSight_ProcessPostPreRender_detour;
 	vtable[5] = CWeaponComponentLaserSight_ApplyAccuracyModifier_detour;
-
-	if constexpr (ConfigHotReloadEnabled)
-	{
-		StartConfigFileWatcher();
-	}
 
 	return true;
 }

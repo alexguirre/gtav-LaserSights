@@ -7,6 +7,6 @@ class Replay
 {
 public:
 	static bool InstallHooks();
-	static void RecordLaserSightState(rage::fwEntity* weaponObject, bool isOn, const rage::Vec4V& dirAndLength);
+	static void RecordLaserSightState(rage::fwEntity* weaponObject, bool isOn, const rage::Vec3V& dir);
 };
 

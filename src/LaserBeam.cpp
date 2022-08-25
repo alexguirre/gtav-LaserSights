@@ -18,7 +18,11 @@
 #include "Hashing.h"
 #include "Resources.h"
 #include <d3d9.h>
+#include "fwTimer.h"
 
+static constexpr const char* ShaderDirectoryPath = "cfx:/plugins/shaders";
+static constexpr const char* ShaderWatchDirectoryPath = "D:\\sources\\fivem\\code\\bin\\five\\debug\\plugins\\shaders\\";
+static constexpr const char* ShaderNoiseTexturePath = "cfx:/plugins/shaders/laser_noise.dds";
 static constexpr bool ShaderHotReloadEnabled
 {
 #if _DEBUG
@@ -32,8 +36,8 @@ static bool ReloadShaders{ false };
 static DWORD ShadersFileWatcher(LPVOID)
 {
 	char path[MAX_PATH];
-	GetFullPathName(".\\shaders\\", MAX_PATH, path, NULL);
-	HANDLE handle = FindFirstChangeNotification(path, TRUE, FILE_NOTIFY_CHANGE_LAST_WRITE);
+	GetFullPathName(ShaderWatchDirectoryPath, MAX_PATH, path, NULL);
+	HANDLE handle = FindFirstChangeNotification(path, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE);
 	if (handle == INVALID_HANDLE_VALUE)
 	{
 		spdlog::debug("Failed to create shaders file watcher");
@@ -136,13 +140,7 @@ static void SetLaserBeamVertex(
 
 static void UpdateTime()
 {
-	struct fwTimeSet
-	{
-		uint32_t totalTimeMs;
-		// ...
-	}* gameTime = reinterpret_cast<fwTimeSet*>(Addresses.fwTimer_sm_gameTime);
-
-	float time = gameTime->totalTimeMs * 0.001f;
+	float time = rage::fwTimer::GameTime().TotalTimeMs * 0.001f;
 	g_LaserBeam.Shader->m_Effect->SetVarCommon(g_LaserBeam.Shader, g_LaserBeam.Vars.gTime, &time, sizeof(float), 1);
 }
 
@@ -214,9 +212,8 @@ static void LoadNoiseTexture()
 
 	if constexpr (ShaderHotReloadEnabled)
 	{
-		auto path = "cfx:/plugins/shaders/laser_noise.dds";
-		spdlog::debug("Loading external noise texture from '{}' (hot-reload)...", path);
-		g_LaserBeam.LaserNoiseTexture = rage::grcTextureFactory::Instance()->Create(path);
+		spdlog::debug("Loading external noise texture from '{}' (hot-reload)...", ShaderNoiseTexturePath);
+		g_LaserBeam.LaserNoiseTexture = rage::grcTextureFactory::Instance()->Create(ShaderNoiseTexturePath);
 	}
 	else // Load embedded DDS
 	{
@@ -274,7 +271,7 @@ static void LoadShaderEffect()
 
 	if constexpr (ShaderHotReloadEnabled)
 	{
-		rage::fiAssetManager::Instance()->PushFolder("cfx:/plugins/shaders");
+		rage::fiAssetManager::Instance()->PushFolder(ShaderDirectoryPath);
 		spdlog::debug("Loading external shader FXC from shaders directory in game root (hot-reload)...");
 		g_LaserBeam.Shader->LoadEffect("laserbeam");
 		rage::fiAssetManager::Instance()->PopFolder();
@@ -406,7 +403,7 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 
 	if constexpr (ShaderHotReloadEnabled)
 	{
-		//StartShadersFileWatcher();
+		StartShadersFileWatcher();
 	}
 }
 

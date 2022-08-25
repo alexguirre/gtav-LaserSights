@@ -62,10 +62,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;LASERSIGHTWEAPONCOMPONENT_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_FIVEM_CONSOLE;SPDLOG_USE_STD_FORMAT;_ITERATOR_DEBUG_LEVEL=0;_DEBUG;LASERSIGHTWEAPONCOMPONENT_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>..\dependencies\minhook\include;..\dependencies\spdlog\include;..\dependencies\jitasm;..\dependencies\patterns;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -83,10 +83,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;LASERSIGHTWEAPONCOMPONENT_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SPDLOG_USE_STD_FORMAT;NDEBUG;LASERSIGHTWEAPONCOMPONENT_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>..\dependencies\minhook\include;..\dependencies\spdlog\include;..\dependencies\jitasm;..\dependencies\patterns;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -113,6 +113,8 @@
     <ClCompile Include="ExtendedWeaponComponentLaserSightInfo.cpp" />
     <ClCompile Include="fiAssetManager.cpp" />
     <ClCompile Include="fiDevice.cpp" />
+    <ClCompile Include="fwEntity.cpp" />
+    <ClCompile Include="fwTimer.cpp" />
     <ClCompile Include="grcDevice.cpp" />
     <ClCompile Include="grcTextureFactory.cpp" />
     <ClCompile Include="grmShaderFactory.cpp" />
@@ -131,11 +133,13 @@
     <ClInclude Include="CCoronas.h" />
     <ClInclude Include="CReplay.h" />
     <ClInclude Include="CTaskAimGun.h" />
+    <ClInclude Include="CWeapon.h" />
     <ClInclude Include="CWeaponComponentLaserSight.h" />
     <ClInclude Include="ExtendedWeaponComponentLaserSightInfo.h" />
     <ClInclude Include="fiAssetManager.h" />
     <ClInclude Include="fiDevice.h" />
     <ClInclude Include="fwEntity.h" />
+    <ClInclude Include="fwTimer.h" />
     <ClInclude Include="grcDevice.h" />
     <ClInclude Include="grcTextureFactory.h" />
     <ClInclude Include="grmShaderFactory.h" />

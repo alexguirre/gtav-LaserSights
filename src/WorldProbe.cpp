@@ -25,13 +25,13 @@ namespace WorldProbe
 		m_ResultHits = nullptr;
 		m_ExcludeEntitiesInsts.Count = 0;
 		m_Unk.Count = 0;
-		m_Flags2 = 0xFFFFFFFF;
+		m_TypeFlags = 0xFFFFFFFF;
 		m_Flags1 = 0;
 		m_MaxResultHits = 0;
 		m_844 = 0;
 		m_848 = 0;
 		m_850 = 0;
-		m_838 = 0x3E00000;
+		m_IncludeFlags = 0x3E00000;
 		m_83C = 7;
 		m_84C = 4;
 	}

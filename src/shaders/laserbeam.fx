@@ -121,11 +121,11 @@ float4 PS_LaserBeam(VS_LaserBeam_Output input) : SV_Target
     r0.x = r0.y * r0.x;
     r0.x = r0.x * 15 + 0.75;
     r0.x *= dustNoise;
-    float4 output = float4(temp, 100.0f*v*0.0125*worldNoise*r0.x);
+    float4 output = float4(temp, 100.0*v*0.0125*worldNoise*r0.x);
 
     float laserDepth = input.position.z;
     float depthPreAlpha = tex2D(DepthBufferPreAlpha, input.position.xy / float2(1920.0f, 1080.0f)).x; // TODO: unhardcode screen res
-    bool depthTest = (depthPreAlpha <= laserDepth); // TODO: does seem to work with water?
+    bool depthTest = (depthPreAlpha <= laserDepth); // TODO: doesn't seem to work with water?
 
     return output * depthTest;
 }

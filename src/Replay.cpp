@@ -9,7 +9,7 @@
 class CPacketWeaponLaserSight : public CPacketWeaponFlashLight
 {
 public:
-	rage::Vec4V dirAndLength;
+	rage::Vec3V dir;
 
 	CPacketWeaponLaserSight();
 };
@@ -103,7 +103,7 @@ static void HookPacketWeaponFlashLightReplayHandler()
 			{
 				laserSight->State().IsInReplay = true;
 				laserSight->State().IsOff = (packet->isOn & 1) == 0;
-				laserSight->SetReplayDirAndLength(packet->dirAndLength);
+				laserSight->SetReplayDir(packet->dir);
 			}
 		}
 	} stub;
@@ -193,14 +193,14 @@ bool Replay::InstallHooks()
 	return true;
 }
 
-void Replay::RecordLaserSightState(rage::fwEntity* weaponObject, bool isOn, const rage::Vec4V& dirAndLength)
+void Replay::RecordLaserSightState(rage::fwEntity* weaponObject, bool isOn, const rage::Vec3V& dir)
 {
 	if (CReplay::IsRecordingActive())
 	{
 		CPacketWeaponLaserSight packet{};
 		packet.isOn = isOn ? 1 : 0;
 		packet.unkFlags |= IsLaserSightStatePacketFlag;
-		packet.dirAndLength = dirAndLength;
+		packet.dir = dir;
 		rage::fwEntity* const entities[]{ weaponObject, nullptr };
 		if (entities[0])
 		{

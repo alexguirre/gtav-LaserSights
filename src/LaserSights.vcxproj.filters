@@ -58,6 +58,12 @@
     <ClCompile Include="grcTextureFactory.cpp">
       <Filter>rage\graphics</Filter>
     </ClCompile>
+    <ClCompile Include="fwEntity.cpp">
+      <Filter>rage</Filter>
+    </ClCompile>
+    <ClCompile Include="fwTimer.cpp">
+      <Filter>rage</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LaserSight.h" />
@@ -119,6 +125,12 @@
     </ClInclude>
     <ClInclude Include="grcTextureFactory.h">
       <Filter>rage\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="CWeapon.h">
+      <Filter>five</Filter>
+    </ClInclude>
+    <ClInclude Include="fwTimer.h">
+      <Filter>rage</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

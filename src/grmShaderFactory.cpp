@@ -2,6 +2,8 @@
 #include "Addresses.h"
 #include <intrin.h>
 
+#include <spdlog/spdlog.h>
+
 namespace rage
 {
 	grcEffect::~grcEffect()
@@ -38,7 +40,18 @@ namespace rage
 	{
 		if (ptr)
 		{
-			uintptr_t allocator = *(uintptr_t*)(*(uintptr_t*)(__readgsqword(0x58u)) + 0xC8);
+			static auto tlsIndex = ([]()
+			{
+				auto base = (char*)GetModuleHandle(NULL);
+				auto moduleBase = (PIMAGE_DOS_HEADER)base;
+				auto ntBase = (PIMAGE_NT_HEADERS)(base + moduleBase->e_lfanew);
+				auto tlsBase = (PIMAGE_TLS_DIRECTORY)(base + ntBase->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress);
+
+				return reinterpret_cast<uint32_t*>(tlsBase->AddressOfIndex);
+			})();
+
+			spdlog::info("TlsIndex = {}", *tlsIndex);
+			uintptr_t allocator = *(uintptr_t*)(*(uintptr_t*)(__readgsqword(0x58u) + 8 * *tlsIndex) + 0xB8);
 			(*(void(**)(uintptr_t, void*))(*(uintptr_t*)allocator + 0x20))(allocator, ptr); // rage::sysMemAllocator::Free
 		}
 	}
