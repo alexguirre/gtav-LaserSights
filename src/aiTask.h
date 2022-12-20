@@ -6,6 +6,12 @@ namespace rage
 	class aiTask
 	{
 	public:
+		virtual void* RTTI_Get() = 0;
+		virtual void* RTTI_Get2() = 0;
+		virtual uint32_t RTTI_GetName() = 0;
+		virtual void* RTTI_DynamicCast(void* targetType) = 0;
+		virtual bool RTTI_Is(void* targetType) = 0;
+		virtual bool RTTI_Is2(void* targetType) = 0;
 		virtual ~aiTask() = 0;
 		virtual uint32_t GetTypeIndex() = 0;
 		virtual void f_2() = 0;

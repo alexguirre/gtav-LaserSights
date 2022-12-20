@@ -75,8 +75,8 @@ static void CleanMat34V(rage::Mat34V& m)
 static rage::aiTaskTree* GetPedTaskTree(rage::fwEntity* ped)
 {
 	// TODO: get offsets from patterns
-	constexpr int IntelligenceOffset = 0x10C0;
-	constexpr int TaskManagerOffset = 0x368; // b2699
+	constexpr int IntelligenceOffset = 0x10A0; // b2802
+	constexpr int TaskManagerOffset = 0x368; // b2802
 	constexpr int TaskTreeOffset = 0x8;
 
 	uint8_t* p = reinterpret_cast<uint8_t*>(ped);
@@ -190,7 +190,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		else
 		{
 			// TODO: replace hardcoded offset
-			constexpr int PlayerInfoOffset = 0x10C8; // b2699
+			constexpr int PlayerInfoOffset = 0x10A8; // b2802
 			const bool isPlayer = ped && *reinterpret_cast<void**>((reinterpret_cast<uint8_t*>(ped) + PlayerInfoOffset));
 
 			newTargetDir = boneMtx.Forward();
@@ -291,7 +291,6 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			const rage::Vec3V up = (endPos - startPos).Normalized();
 			const rage::Vec3V right = up.Cross(look).Normalized();
 
-			CScriptIM_DrawLine(startPos, endPos, 0xFFFFFFFF);
 			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right, info->Color);
 		}
 	}
@@ -313,13 +312,17 @@ bool LaserSight::InstallHooks()
 {
 	void** vtable = (void**)Addresses.CWeaponComponentLaserSight_vftable;
 
-	CWeaponComponentLaserSight_Process_orig = (decltype(CWeaponComponentLaserSight_Process_orig))vtable[3];
-	CWeaponComponentLaserSight_ProcessPostPreRender_orig = (decltype(CWeaponComponentLaserSight_ProcessPostPreRender_orig))vtable[4];
-	CWeaponComponentLaserSight_ApplyAccuracyModifier_orig = (decltype(CWeaponComponentLaserSight_ApplyAccuracyModifier_orig))vtable[5];
+	constexpr size_t Idx_Process = 8;
+	constexpr size_t Idx_ProcessPostPreRender = 9;
+	constexpr size_t Idx_ApplyAccuracyModifier = 10;
 
-	vtable[3] = CWeaponComponentLaserSight_Process_detour;
-	vtable[4] = CWeaponComponentLaserSight_ProcessPostPreRender_detour;
-	vtable[5] = CWeaponComponentLaserSight_ApplyAccuracyModifier_detour;
+	CWeaponComponentLaserSight_Process_orig = (decltype(CWeaponComponentLaserSight_Process_orig))vtable[Idx_Process];
+	CWeaponComponentLaserSight_ProcessPostPreRender_orig = (decltype(CWeaponComponentLaserSight_ProcessPostPreRender_orig))vtable[Idx_ProcessPostPreRender];
+	CWeaponComponentLaserSight_ApplyAccuracyModifier_orig = (decltype(CWeaponComponentLaserSight_ApplyAccuracyModifier_orig))vtable[Idx_ApplyAccuracyModifier];
+
+	vtable[Idx_Process] = CWeaponComponentLaserSight_Process_detour;
+	vtable[Idx_ProcessPostPreRender] = CWeaponComponentLaserSight_ProcessPostPreRender_detour;
+	vtable[Idx_ApplyAccuracyModifier] = CWeaponComponentLaserSight_ApplyAccuracyModifier_detour;
 
 	return true;
 }

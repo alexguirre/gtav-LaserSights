@@ -52,7 +52,7 @@ namespace rage
 
 			spdlog::info("TlsIndex = {}", *tlsIndex);
 			uintptr_t allocator = *(uintptr_t*)(*(uintptr_t*)(__readgsqword(0x58u) + 8 * *tlsIndex) + 0xB8);
-			(*(void(**)(uintptr_t, void*))(*(uintptr_t*)allocator + 0x20))(allocator, ptr); // rage::sysMemAllocator::Free
+			(*(void(**)(uintptr_t, void*))(*(uintptr_t*)allocator + 0x50))(allocator, ptr); // rage::sysMemAllocator::Free
 		}
 	}
 
