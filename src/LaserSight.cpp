@@ -111,6 +111,15 @@ static void PlayToggleSound(void* weapon, bool isOn)
 	reinterpret_cast<void(*)(void*, void*, bool)>(Addresses.PlayWeaponFlashLightToggleSound)(Addresses.audWeaponAudioEntity_Instance, weapon, isOn);
 }
 
+static void DRAW_SPOT_LIGHT(const rage::Vec3V& pos, const rage::Vec3V& dir, int r, int g, int b, float distance, float brightness, float innerAngle, float outerAngle, float falloff)
+{
+	struct scrVector3 { float x, _pad1, y, _pad2, z, _pad3; };
+	using Fn = void(*)(const scrVector3& pos, const scrVector3& dir, int r, int g, int b, float distance, float brightness, float innerAngle, float outerAngle, float falloff);
+	scrVector3 posS{ pos.x, 0, pos.y, 0, pos.z, 0 };
+	scrVector3 dirS{ dir.x, 0, dir.y, 0, dir.z, 0 };
+	reinterpret_cast<Fn>(Addresses.DRAW_SPOT_LIGHT)(posS, dirS, r, g, b, distance, brightness, innerAngle, outerAngle, falloff);
+}
+
 static bool IsLaserVisible(CWeaponComponentLaserSight* sight)
 {
 	if (sight->State().IsOff)
@@ -186,7 +195,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 			newTargetDir = boneMtx.Forward();
 
-			if (ped /*&& isPlayer*/ && false)
+			if (ped)
 			{
 				constexpr uint32_t CTaskAimGunOnFoot = 4;
 				constexpr uint32_t CTaskAimGunVehicleDriveBy = 295;
@@ -212,16 +221,6 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 					//const rage::Vec3V origDir = (origEndPos - origStartPos).Normalized();
 					const rage::Vec3V aimDir = (aimEndPos - muzzleMtx.Position()).Normalized();
 
-					//const float angleCos = origDir.Dot(aimDir);
-					//const float angleDegrees = acosf(angleCos) * 180.0f / 3.1415926f;
-					//if (angleDegrees < 17.5f)
-					{
-						// only use aiming direction if it is close enough to the component direction
-						// to avoid visual issues in first person/rolling/etc.
-						//startPos = aimStartPos;
-						//endPos = startPos + aimDir * info->BeamRange;
-					}
-
 					newTargetDir = aimDir;
 				}
 			}
@@ -229,22 +228,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 		auto& d = This->Data();
 		d.TargetDir = newTargetDir;
-		//if (XMVector3Equal(XMVectorZero(), d.CurrDir.v))
-		{
-			d.CurrDir = d.TargetDir;
-		}
-		//else
-		//{
-		//	rage::Vec3V angleDiff = XMVector3AngleBetweenNormals(d.CurrDir.v, d.TargetDir.v);
-		//	if (!XMVector3Equal(XMVectorZero(), angleDiff.v) && !XMVector3IsNaN(angleDiff.v) && !XMVector3IsInfinite(angleDiff.v))
-		//	{
-		//		float t = 3.14f*2 * rage::fwTimer::GameTime().FrameTime / angleDiff.x;
-		//		t = std::min(t, 1.0f);
-		//		d.CurrDir = XMVectorLerp(d.CurrDir.v, d.TargetDir.v, t);
-		//		rage::Vec3V angleDiff2 = XMVector3AngleBetweenNormals(d.CurrDir.v, d.TargetDir.v);
-		//		spdlog::info("angleDiff:{} -> {},d.CurrDir:({},{},{})", angleDiff.x, angleDiff2.x, d.CurrDir.x, d.CurrDir.y, d.CurrDir.z);
-		//	}
-		//}
+		d.CurrDir = d.TargetDir;
 
 		{
 			// convert the direction from world space to local space
@@ -260,7 +244,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		rage::Vec3V endPos = startPos + d.CurrDir * info->BeamRange;
 
 		{
-			static WorldProbe::CShapeTestResults results{ 16 };
+			static WorldProbe::CShapeTestResults results(16);
 
 			results.AbortTest();
 			WorldProbe::CShapeTestProbeDesc desc;
@@ -279,13 +263,19 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 			if (results.m_State == 4 && results.m_HitCount > 0)
 			{
+				rage::Vec3V prevHitPos(99999.9f);
 				for (int i = 0; i < results.m_HitCount; i++)
 				{
 					WorldProbe::CShapeTestHit* hit = &results.m_Hits[i];
 
 					endPos = hit->m_Position;
-
-					CCoronas::Instance()->Draw(hit->m_Position, info->CoronaSize * 0.25f, info->CoronaColor, info->CoronaIntensity * 1.25f, 100.0f, hit->m_SurfaceNormal, 1.0f, 65.0f, 85.0f, 3);
+					
+					if ((endPos - prevHitPos).LengthSquared() > 0.15f * 0.15f)
+					{
+						CCoronas::Instance()->Draw(hit->m_Position, info->CoronaSize * 0.2f, info->CoronaColor, info->CoronaIntensity * 1.25f, 100.0f, hit->m_SurfaceNormal, 1.0f, 60.0f, 85.0f, 3);
+						//DRAW_SPOT_LIGHT(hit->m_Position + hit->m_SurfaceNormal * 0.125f, -hit->m_SurfaceNormal, 255, 0, 0, 0.15f, 1000.0f, 7.5f, 7.5f, 1.0f);
+					}
+					prevHitPos = endPos;
 				}
 
 				results.AbortTest();
@@ -293,7 +283,6 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 		}
 
 		{
-			//startPos = boneMtx.Position();
 			const rage::Mat34V& camMtx = camBaseCamera::GetCurrentCamera()->GetTransform();
 
 			// based on arbitrary axis billboards: http://nehe.gamedev.net/article/billboarding_how_to/18011/
@@ -302,6 +291,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			const rage::Vec3V up = (endPos - startPos).Normalized();
 			const rage::Vec3V right = up.Cross(look).Normalized();
 
+			CScriptIM_DrawLine(startPos, endPos, 0xFFFFFFFF);
 			LaserBeam::DrawBeam(info->BeamWidth, startPos, endPos, right, info->Color);
 		}
 	}

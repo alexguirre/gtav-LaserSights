@@ -208,6 +208,8 @@ bool AddressManager::Init()
 	res &= FindRIP(DepthBufferPreAlpha, "48 8B 05 ? ? ? ? 33 D2 44 39 35 ? ? ? ? 76 2D 4C 8D 8D", 3);
 	
 	res &= Find(fwEntity_GetBoneIndex, "48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B 01 83 4C 24", 0);
+	
+	res &= Find(DRAW_SPOT_LIGHT, "E8 ? ? ? ? F3 0F 10 85 ? ? ? ? 0F 2E 05 ? ? ? ? 75 08 F3 0F 10 05 ? ? ? ? 48 8D 4C 24 ? 45 33 C0 33 D2", -0x1CB);
 
 	return res;
 }

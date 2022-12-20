@@ -1,5 +1,8 @@
 #include <rage_shared.fx>
 
+static const float2 cScreenRes = float2(1920.0f, 1080.0f); // TODO: unhardcode screen res
+static const float cBeamLength = 100.0f; // TODO: unhardcode beam length
+
 cbuffer LaserParam : register(b10)
 {
 	float gTime;
@@ -74,60 +77,82 @@ float my_noise( float3 x )
                    lerp( hash(n+170.0), hash(n+171.0),f.x),f.y),f.z);
 }
 
-float4 PS_LaserBeam(VS_LaserBeam_Output input) : SV_Target
+
+float4 ApplyDustParticles(VS_LaserBeam_Output input, float4 output, float4 r1, float v)
 {
-    float4 timers = float4(gTime, gTime, gTime, gTime);
-    float4 r0, r1;
-    float4 rtdim = float4(0.00052, 0.00093, 0.0, 0.0);
-    r0.x = rtdim.x / rtdim.y;
-    r1.yz = rtdim.xy * input.position.xy;
-    r1.x = r1.y / r0.x;
-    
-    float2 uv = input.texcoord;
-    uv.y = uv.y - 0.5;
-    float t = abs(sin(gTime+r1.x))*0.15+0.9;
-    float v = smoothstep(0.8*t, 0.0, abs(uv.y));
-    float a = saturate(tex2D(LaserNoise, gTime*0.1/**r1.xz*5*/).g)+0.05;//(my_noise(float3(gTime*0.1*uv*0.5, gTime+uv.x))+1.0)*0.25+0.005;
-    // return float4(a, 0, 0, 1);
-    float3 temp = input.color.rgb * v;
+    float particleSpeed = 0.45;
 
-
-    float4 worldPos = mul(gViewInverse, input.view_position);
-    float2 worldNoiseUV = gTime * 0.001 * float2((worldPos.x + worldPos.y + worldPos.z) * 0.25, (worldPos.x - worldPos.y - worldPos.z) * 0.25);
-    float worldNoise = tex2D(LaserNoise, worldNoiseUV).g;
-
-    // return float4(temp, v*0.0125*noise);
-
-    // float2 noiseUV = mul(gViewInverse, float4(input.position.xyz, 1.0)).xy * 0.015;
-    
-    float particleSpeed = 0.45;// + (((gTime * 0.00001) % 1.0) - 0.25);// worldNoiseUV.y * worldNoiseUV.x;
-
-    r0.xyzw = (gTime * particleSpeed) * float4(0.140000001,0.0299999993,0.0799999982,-0.0900000036) + r1.xzxz;
+    float4 r0 = (gTime * particleSpeed) * float4(0.140000001,0.0299999993,0.0799999982,-0.0900000036) + r1.xzxz;
     r0.zw = float2(0.200000003,0.200000003) + r0.zw;
     float4 r0_reversed = (-gTime * particleSpeed) * float4(0.140000001,0.0299999993,0.0799999982,-0.0900000036) + r1.xzxz;
     r0_reversed.zw = float2(0.200000003,0.200000003) + r0_reversed.zw;
     float dustNoise = tex2D(LaserNoise, r0.zw*0.15).g;
-    
+
     float mult = 1.5;
-    float2 noiseUV1 = r0.xy*mult, noiseUV2 = r0.zw*mult, noiseUV3 = r0_reversed.xy*mult, noiseUV4 = r0_reversed.zw*mult;
+    float2 noiseUV1 = r0.xy*mult,
+           noiseUV2 = r0.zw*mult,
+           noiseUV3 = r0_reversed.xy*mult,
+           noiseUV4 = r0_reversed.zw*mult;
 
     float noise1 = tex2D(LaserNoise, noiseUV1).r;
     float noise2 = tex2D(LaserNoise, noiseUV2).r;
     float noise3 = tex2D(LaserNoise, noiseUV3).r;
     float noise4 = tex2D(LaserNoise, noiseUV4).r;
 
-    r0.x = 8 * noise1 * noise2 * noise3 * noise4;
-    r0.y = 0.5;// saturate(0.5 * 0.0299999993 + 1);
-    r0.x = r0.y * r0.x;
-    r0.x = r0.x * 15 + 0.75;
-    r0.x *= dustNoise;
-    float4 output = float4(temp, 100.0*v*0.0125*worldNoise*r0.x);
+    float rx = 8 * noise1 * noise2 * noise3 * noise4;
+    float ry = 0.5;// saturate(0.5 * 0.0299999993 + 1);
+    rx = ry * rx;
+    rx = rx * 15 + 0.75;
+    rx *= dustNoise;
+    return output * float4(1.0, 1.0, 1.0, /*100.0**/rx);
+}
 
+float4 ApplyDepthTest(VS_LaserBeam_Output input, float4 output)
+{
+    // TODO: use depth-stencil state
     float laserDepth = input.position.z;
-    float depthPreAlpha = tex2D(DepthBufferPreAlpha, input.position.xy / float2(1920.0f, 1080.0f)).x; // TODO: unhardcode screen res
+    float depthPreAlpha = tex2D(DepthBufferPreAlpha, input.position.xy / cScreenRes).x; // TODO: unhardcode screen res
     bool depthTest = (depthPreAlpha <= laserDepth); // TODO: doesn't seem to work with water?
-
     return output * depthTest;
+}
+
+float GetDistanceFromSource(VS_LaserBeam_Output input)
+{
+    return input.texcoord.x;
+}
+
+float GetDistanceFromSourceNormalized(VS_LaserBeam_Output input)
+{
+    return GetDistanceFromSource(input) / cBeamLength;
+}
+
+float4 PS_LaserBeam(VS_LaserBeam_Output input) : SV_Target
+{
+    float4 r0, r1;
+    float4 rtdim = float4(1.0f / cScreenRes.x, 1.0f / cScreenRes.y, 0.0, 0.0);
+    float aspectRatio = rtdim.x / rtdim.y;
+    r1.yz = rtdim.xy * input.position.xy;
+    r1.x = r1.y / aspectRatio;
+    
+    float2 uv = input.texcoord;
+    uv.y = uv.y - 0.5;
+    float t = abs(sin(gTime+r1.x))*0.15+0.9;
+    float v = smoothstep(0.8*t, 0.0, abs(uv.y));
+    float a = saturate(tex2D(LaserNoise, gTime*0.1/**r1.xz*5*/).g)+0.05;
+
+
+
+    float4 worldPos = mul(gViewInverse, input.view_position);
+    float2 worldNoiseUV = gTime * 0.001 * float2((worldPos.x + worldPos.y + worldPos.z) * 0.25, (worldPos.x - worldPos.y - worldPos.z) * 0.25);
+    float worldNoise = tex2D(LaserNoise, worldNoiseUV).g;
+
+    float4 output = float4(input.color.rgb * v, v * 0.0125 * worldNoise);
+
+    output = ApplyDustParticles(input, output, r1, v);
+
+    output = ApplyDepthTest(input, output);
+    output *= 200.0f;
+    return output;
 }
 
 technique LaserBeam

@@ -35,6 +35,10 @@ namespace rage
 			: v{ _mm_set_ps(0.0f, z, y, x) }
 		{}
 
+		inline Vec3V(float value)
+			: v{ _mm_set_ps1(value) }
+		{}
+
 		inline Vec3V(__m128 v)
 			: v{ v }
 		{}
@@ -68,6 +72,8 @@ namespace rage
 		inline float Dot(const Vec3V& b) const { return _mm_cvtss_f32(dot(v, b.v)); }
 
 		inline void Normalize() { v = this->Normalized().v; }
+		
+		inline Vec3V operator-() const { return DirectX::XMVectorNegate(v); }
 
 		inline Vec3V operator+(const Vec3V& other) const { return _mm_add_ps(v, other.v); }
 		inline Vec3V operator-(const Vec3V& other) const { return _mm_sub_ps(v, other.v); }
@@ -82,6 +88,8 @@ namespace rage
 		inline Vec3V operator/(float value) const { return _mm_div_ps(v, _mm_set1_ps(value)); }
 		inline Vec3V& operator*=(float value) { v = _mm_mul_ps(v, _mm_set1_ps(value)); return *this; }
 		inline Vec3V& operator/=(float value) { v = _mm_div_ps(v, _mm_set1_ps(value)); return *this; }
+
+		inline static Vec3V Zero() { return _mm_setzero_ps(); }
 	};
 	static_assert(sizeof(Vec3V) == 0x10);
 

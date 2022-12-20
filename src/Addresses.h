@@ -64,6 +64,7 @@ public:
 	void* resetSceneLights = nullptr;
 	void* DepthBufferPreAlpha = nullptr;
 	void* fwEntity_GetBoneIndex = nullptr;
+	void* DRAW_SPOT_LIGHT = nullptr;
 
 	bool Init();
 };
