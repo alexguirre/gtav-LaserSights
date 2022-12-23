@@ -96,7 +96,7 @@ struct BeamDrawCall
 	rage::Vec3V m_From;
 	rage::Vec3V m_To;
 	rage::Vec3V m_RightVector;
-	rage::Vec3V m_Color;
+	rage::Vec4V m_ColorXYZ_BeamIntesityW;
 };
 struct BeamDrawCallsBuffer
 {
@@ -125,17 +125,18 @@ static std::string MakeResourceMemoryFileName(int resourceId, const char* name)
 
 static void SetLaserBeamVertex(
 	void* buffer, size_t index,
-	const rage::Vec3V& position, const rage::Vec3V& color, const float texcoord[2])
+	const rage::Vec3V& position, const rage::Vec4V& colorXYZ_beamIntensityW, const float texcoord[2])
 {
 	float* v = reinterpret_cast<float*>(reinterpret_cast<char*>(buffer) + g_LaserBeam.VertexDecls.LaserBeam->m_VertexSize * index);
 	v[0] = position.x;
 	v[1] = position.y;
 	v[2] = position.z;
-	v[3] = color.x;
-	v[4] = color.y;
-	v[5] = color.z;
-	v[6] = texcoord[0];
-	v[7] = texcoord[1];
+	v[3] = colorXYZ_beamIntensityW.x;
+	v[4] = colorXYZ_beamIntensityW.y;
+	v[5] = colorXYZ_beamIntensityW.z;
+	v[6] = colorXYZ_beamIntensityW.w;
+	v[7] = texcoord[0];
+	v[8] = texcoord[1];
 }
 
 static void UpdateTime()
@@ -174,7 +175,7 @@ static void RenderBeam(const BeamDrawCall& drawCall)
 	void* buffer = rage::grcDevice::BeginVertices(rage::grcDrawMode::TriangleStrip, VertexCount, g_LaserBeam.VertexDecls.LaserBeam->m_VertexSize);
 	for (size_t i = 0; i < VertexCount; i++)
 	{
-		SetLaserBeamVertex(buffer, i, p[i], drawCall.m_Color, uv[i]);
+		SetLaserBeamVertex(buffer, i, p[i], drawCall.m_ColorXYZ_BeamIntesityW, uv[i]);
 	}
 	rage::grcDevice::EndVertices();
 }
@@ -393,7 +394,7 @@ static void CGtaRenderThreadGameInterface_RenderThreadInit_detour(void* This)
 	{
 		/* InputSlot         SemanticName         SemanticIndex ByteSize        Format                     InputSlotClass InstanceDataStepRate */
 		{ 0, rage::grcVertexElement::SemanticName::POSITION, 0, 12, rage::grcVertexElement::Format::R32G32B32_FLOAT,    0, 0 },
-		{ 0, rage::grcVertexElement::SemanticName::COLOR,    0, 12, rage::grcVertexElement::Format::R32G32B32_FLOAT,    0, 0 },
+		{ 0, rage::grcVertexElement::SemanticName::COLOR,    0, 16, rage::grcVertexElement::Format::R32G32B32A32_FLOAT, 0, 0 },
 		{ 0, rage::grcVertexElement::SemanticName::TEXCOORD, 0, 8,  rage::grcVertexElement::Format::R32G32_FLOAT,       0, 0 },
 	};
 	g_LaserBeam.VertexDecls.LaserBeam = rage::grcDevice::CreateVertexDeclaration(laserBeamVertexElements, std::size(laserBeamVertexElements));
@@ -481,12 +482,12 @@ bool LaserBeam::Init(HMODULE hModule)
 	return InstallHooks();
 }
 
-void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector, const rage::Vec3V& color)
+void LaserBeam::DrawBeam(float width, const rage::Vec3V& from, const rage::Vec3V& to, const rage::Vec3V& rightVector, const rage::Vec4V& colorXYZ_beamIntensityW)
 {
 	auto& currBuffer = g_BeamDrawCallBuffers[g_BeamDrawCallBuffersIdx];
 	if (currBuffer.m_NumDrawCalls < currBuffer.m_DrawCalls.size())
 	{
-		currBuffer.m_DrawCalls[currBuffer.m_NumDrawCalls] = { width * 0.5f, from, to, rightVector, color };
+		currBuffer.m_DrawCalls[currBuffer.m_NumDrawCalls] = { width * 0.5f, from, to, rightVector, colorXYZ_beamIntensityW };
 		currBuffer.m_NumDrawCalls++;
 	}
 }

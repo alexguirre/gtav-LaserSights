@@ -38,6 +38,7 @@
 	}
 
 #define MEMBER_DATA_VEC3V(fieldName) MEMBER_DATA_VECTOR(fieldName, rage::parMemberType::VEC3V)
+#define MEMBER_DATA_VEC4V(fieldName) MEMBER_DATA_VECTOR(fieldName, rage::parMemberType::VEC4V)
 
 
 MEMBER_DATA_FLOAT(CoronaSize);
@@ -47,7 +48,7 @@ MEMBER_DATA_STRUCT(LaserSightBone, 0);
 // new properties
 MEMBER_DATA_FLOAT(BeamWidth);
 MEMBER_DATA_FLOAT(BeamRange);
-MEMBER_DATA_VEC3V(Color);
+MEMBER_DATA_VEC4V(Color);
 MEMBER_DATA_UINT(CoronaColor);
 MEMBER_DATA_BOOL(IR);
 

@@ -28,6 +28,7 @@ namespace rage
 		FLOAT = 7,
 		STRUCT = 12,
 		VEC3V = 20,
+		VEC4V = 21,
 	};
 
 	class parMemberCommonData

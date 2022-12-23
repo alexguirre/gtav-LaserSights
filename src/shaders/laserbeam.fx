@@ -29,7 +29,7 @@ sampler2D DepthBufferPreAlpha : register(s12) : register(t12)
 struct VS_LaserBeam_Input
 {
 	float3 position : POSITION;
-    float3 color : COLOR;
+    float4 color : COLOR;
 	float2 texcoord : TEXCOORD; // x=[0.0, BeamRange], y=[0.0, 1.0]
 };
 
@@ -37,7 +37,7 @@ struct VS_LaserBeam_Output
 {
     float4 position : SV_Position;
     float4 view_position : TEXCOORD0;
-    float3 color : COLOR;
+    float4 color : COLOR;
 	float2 texcoord : TEXCOORD1;
 };
 
@@ -151,7 +151,7 @@ float4 PS_LaserBeam(VS_LaserBeam_Output input) : SV_Target
     output = ApplyDustParticles(input, output, r1, v);
 
     output = ApplyDepthTest(input, output);
-    output *= 200.0f;
+    output *= input.color.a; // 4.5;
     return output;
 }
 

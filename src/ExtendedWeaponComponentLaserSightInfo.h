@@ -12,7 +12,7 @@ class ExtendedWeaponComponentLaserSightInfo : public CWeaponComponentLaserSightI
 public:
 	float BeamWidth;
 	float BeamRange;
-	rage::Vec3V Color;
+	rage::Vec4V Color;
 	uint32_t CoronaColor;
 	bool IR;
 
