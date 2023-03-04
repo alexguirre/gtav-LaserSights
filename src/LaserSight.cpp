@@ -247,7 +247,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 			newTargetDir = boneMtx.Forward();
 
-			if (ped)
+			if (isPlayer && ped)
 			{
 				constexpr uint32_t CTaskAimGunOnFoot = 4;
 				constexpr uint32_t CTaskAimGunVehicleDriveBy = 295;
