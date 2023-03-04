@@ -1,8 +1,5 @@
 #include <rage_shared.fx>
 
-static const float2 cScreenRes = float2(1920.0f, 1080.0f); // TODO: unhardcode screen res
-static const float cBeamLength = 100.0f; // TODO: unhardcode beam length
-
 cbuffer LaserParam : register(b10)
 {
 	float gTime;
@@ -111,7 +108,7 @@ float4 ApplyDepthTest(VS_LaserBeam_Output input, float4 output)
 {
     // TODO: use depth-stencil state
     float laserDepth = input.position.z;
-    float depthPreAlpha = tex2D(DepthBufferPreAlpha, input.position.xy / cScreenRes).x; // TODO: unhardcode screen res
+    float depthPreAlpha = tex2D(DepthBufferPreAlpha, input.position.xy * globalScreenSize.zw).x;
     bool depthTest = (depthPreAlpha <= laserDepth); // TODO: doesn't seem to work with water?
     return output * depthTest;
 }
@@ -121,15 +118,16 @@ float GetDistanceFromSource(VS_LaserBeam_Output input)
     return input.texcoord.x;
 }
 
-float GetDistanceFromSourceNormalized(VS_LaserBeam_Output input)
-{
-    return GetDistanceFromSource(input) / cBeamLength;
-}
+//static const float cBeamLength = 100.0f; // TODO: unhardcode beam length
+//float GetDistanceFromSourceNormalized(VS_LaserBeam_Output input)
+//{
+//    return GetDistanceFromSource(input) / cBeamLength;
+//}
 
 float4 PS_LaserBeam(VS_LaserBeam_Output input) : SV_Target
 {
     float4 r0, r1;
-    float4 rtdim = float4(1.0f / cScreenRes.x, 1.0f / cScreenRes.y, 0.0, 0.0);
+    float4 rtdim = float4(globalScreenSize.z, globalScreenSize.w, 0.0, 0.0);
     float aspectRatio = rtdim.x / rtdim.y;
     r1.yz = rtdim.xy * input.position.xy;
     r1.x = r1.y / aspectRatio;
@@ -151,7 +149,7 @@ float4 PS_LaserBeam(VS_LaserBeam_Output input) : SV_Target
     output = ApplyDustParticles(input, output, r1, v);
 
     output = ApplyDepthTest(input, output);
-    output *= input.color.a; // 4.5;
+    output *= input.color.a;
     return output;
 }
 
