@@ -51,12 +51,12 @@ enum : uint32_t
     MAP_DEEP_SURFACE = 1u << 31,
 };
 
-static struct Config
-{
-	uint32_t ShapeTestFlags1 = 0x100;
-	uint32_t ShapeTestFlags2 = 
-		0xE1134C2; // MAP_WEAPON, VEHICLE_NOT_BVH, VEHICLE_BVH, RAGDOLL, ANIMAL_RAGDOLL, OBJECT, PROJECTILE, FORKLIFT_FORKS, TEST_VEHICLE_WHEEL, GLASS, MAP_RIVER
-} g_Config;
+//static struct Config
+//{
+//	uint32_t ShapeTestFlags1 = 0x100;
+//	uint32_t ShapeTestFlags2 = 
+//		0xE1134C2; // MAP_WEAPON, VEHICLE_NOT_BVH, VEHICLE_BVH, RAGDOLL, ANIMAL_RAGDOLL, OBJECT, PROJECTILE, FORKLIFT_FORKS, TEST_VEHICLE_WHEEL, GLASS, MAP_RIVER
+//} g_Config;
 
 // NOTE: CScriptIM::DrawLine crashes if called during R* Editor export
 static void CScriptIM_DrawLine(const rage::Vec3V& start, const rage::Vec3V& end, uint32_t color)
@@ -143,6 +143,58 @@ static rage::fwEntity* GetWeaponObject(CWeaponComponentLaserSight* sight)
 	return *reinterpret_cast<rage::fwEntity**>(reinterpret_cast<uint8_t*>(sight->m_OwnerWeapon) + 0x58);
 }
 
+static bool IsSeeThrough(uint64_t materialIndex)
+{
+	// hardcoded materials with SEE_THRU flag set
+	// TODO: check phMaterial flags instead?
+	switch (materialIndex)
+	{
+	case 61: // METAL_CHAINLINK_SMALL
+	case 62: // METAL_CHAINLINK_LARGE
+
+	case 64: // METAL_GRILLE
+
+	case 80: // WOOD_LATTICE
+
+	case 111: // SLATTED_BLINDS
+	case 112: // GLASS_SHOOT_THROUGH
+	case 113: // GLASS_BULLETPROOF
+
+	case 115: // PERSPEX
+
+	case 120: // CAR_GLASS_WEAK
+	case 121: // CAR_GLASS_MEDIUM
+	case 122: // CAR_GLASS_STRONG
+	case 123: // CAR_GLASS_BULLETPROOF
+
+	case 125: // WATER
+
+	case 131: // EMISSIVE_GLASS
+
+	case 142: // PHYS_CAR_VOID
+
+	case 144: // PHYS_ELECTRIC_FENCE
+
+	case 146: // PHYS_BARBED_WIRE
+		return true;
+
+	default:
+		return false;
+	}
+}
+
+static bool IsPassThrough(uint64_t materialIndex)
+{
+	switch (materialIndex)
+	{
+	case 142: // PHYS_CAR_VOID
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 static void(*CWeaponComponentLaserSight_Process_orig)(CWeaponComponentLaserSight* This, rage::fwEntity* ped);
 static void CWeaponComponentLaserSight_Process_detour(CWeaponComponentLaserSight* This, rage::fwEntity* ped)
 {
@@ -211,6 +263,7 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 					rage::Vec3V aimStartPos, aimEndPos;
 					bool s = aimTask->DoShapeTest(ped, &aimStartPos, &aimEndPos, nullptr, nullptr, true);
 
+					// TODO: cache muzzle bone index
 					uint32_t muzzleBoneIndex = This->m_OwnerWeapon->OwnerObject->GetBoneIndex(17833/*Gun_Muzzle*/);
 					rage::Mat34V muzzleMtx;
 					This->m_OwnerWeapon->OwnerObject->GetGlobalMtx(muzzleBoneIndex, &muzzleMtx);
@@ -252,8 +305,11 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 			desc.SetExcludeEntities(excludeEntities, std::size(excludeEntities), 0);
 			desc.SetResultsStructure(&results);
 			// TODO: find more appropriate shapetest flags
-			desc.m_Flags1 = g_Config.ShapeTestFlags1;
-			desc.m_TypeFlags = g_Config.ShapeTestFlags2;
+			desc.m_Flags1 = 0x100;
+			desc.m_TypeFlags = MAP_WEAPON | MAP_DYNAMIC | MAP_ANIMAL | MAP_VEHICLE |
+				VEHICLE_NOT_BVH | VEHICLE_BVH | /*PED | */ RAGDOLL | ANIMAL | ANIMAL_RAGDOLL | OBJECT |
+				OBJECT_ENV_CLOTH | PLANT | PROJECTILE | EXPLOSION | PICKUP | FOLIAGE | FORKLIFT_FORKS |
+				GLASS | MAP_RIVER | SMOKE | UNSMASHED | MAP_STAIRS | MAP_DEEP_SURFACE;
 			desc.m_IncludeFlags = 0xFFFFFFFF;
 			desc.m_Start = startPos;
 			desc.m_End = endPos;
@@ -270,13 +326,22 @@ static void CWeaponComponentLaserSight_ProcessPostPreRender_detour(CWeaponCompon
 
 					endPos = hit->m_Position;
 					
-					if ((endPos - prevHitPos).LengthSquared() > 0.15f * 0.15f)
+					auto materialIndex = hit->m_Material & 0xFF;
+					
+					if (!IsPassThrough(materialIndex) && (endPos - prevHitPos).LengthSquared() > 0.15f * 0.15f)
 					{
 						CCoronas::Instance()->Draw(hit->m_Position, info->CoronaSize * 0.2f, info->CoronaColor, info->CoronaIntensity * 1.25f, 100.0f, hit->m_SurfaceNormal, 1.0f, 60.0f, 85.0f, 3);
 						//DRAW_SPOT_LIGHT(hit->m_Position + hit->m_SurfaceNormal * 0.125f, -hit->m_SurfaceNormal, 255, 0, 0, 0.15f, 1000.0f, 7.5f, 7.5f, 1.0f);
 					}
 					prevHitPos = endPos;
+
+					//spdlog::trace("Hit #{}: material #{} {}  (seethru {})", i, materialIndex, hit->m_Material, IsSeeThrough(materialIndex));
+					if (!IsSeeThrough(materialIndex))
+					{
+						break;
+					}
 				}
+				//spdlog::trace("-----------------");
 
 				results.AbortTest();
 			}
