@@ -293,7 +293,11 @@ static void LoadShaderEffect()
 		addr[4] = 0x90; // nop
 		FlushInstructionCache(GetCurrentProcess(), addr, savedCallInstruction.size());
 
-		auto path = MakeResourceMemoryFileName(LASERSIGHTS_RES_ID_LASERBEAM_FXC, "laserbeam.fxc");
+		auto& shaderQuality = *reinterpret_cast<uint32_t*>(Addresses.ShaderQuality);
+		spdlog::debug("Shader Quality = {}", shaderQuality);
+		auto path = shaderQuality != 0 ?
+			MakeResourceMemoryFileName(LASERSIGHTS_RES_ID_LASERBEAM_FXC, "laserbeam.fxc") :
+			MakeResourceMemoryFileName(LASERSIGHTS_RES_ID_LASERBEAM_LQ_FXC, "laserbeam_lq.fxc");
 		spdlog::debug("Loading embedded shader FXC from '{}'...", path);
 		g_LaserBeam.Shader->LoadEffect(path.c_str());
 

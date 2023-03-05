@@ -1,4 +1,5 @@
 #include <rage_shared.fx>
+#include <misc_globals.fx>
 
 cbuffer LaserParam : register(b10)
 {

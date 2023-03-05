@@ -161,6 +161,12 @@
     <Filter Include="shaders\lib">
       <UniqueIdentifier>{c117d7fc-1d66-47b7-8fbd-da792c4ba082}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shaders\lib\lq">
+      <UniqueIdentifier>{9e51fe9c-49c5-4abe-914f-672a8200a84f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders\lib\hq">
+      <UniqueIdentifier>{22790998-2eb0-479d-9422-437759f74162}</UniqueIdentifier>
+    </Filter>
     <Filter Include="resources">
       <UniqueIdentifier>{12b6382d-3a38-457f-88f7-bcf583f2c477}</UniqueIdentifier>
     </Filter>
@@ -169,6 +175,12 @@
     <ResourceCompile Include="Resources.rc" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="shaders\lib\lq\misc_globals.fx">
+      <Filter>shaders\lib\lq</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\lib\hq\misc_globals.fx">
+      <Filter>shaders\lib\hq</Filter>
+    </FxCompile>
     <FxCompile Include="shaders\lib\rage_shared.fx">
       <Filter>shaders\lib</Filter>
     </FxCompile>
@@ -178,6 +190,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\laserbeam.fxc">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\laserbeam_lq.fxc">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

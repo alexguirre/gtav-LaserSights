@@ -6,12 +6,12 @@
 AddressManager Addresses{};
 
 /// `addr` should point to the RIP-relative offset, not to the first byte of the instruction.
-template<typename T = void>
+template<typename T = void, int Length = 4>
 inline T* GetRIPRelativeAddress(void* addr)
 {
 	char* from = reinterpret_cast<char*>(addr);
 	int relAddr = *reinterpret_cast<int*>(addr);
-	return reinterpret_cast<T*>(from + relAddr + 4);
+	return reinterpret_cast<T*>(from + relAddr + Length);
 }
 
 static void LogNotFoundPattern(std::string_view storageName, std::string_view pattern, size_t numMatches, size_t expectedNumMatches)
@@ -45,12 +45,13 @@ static bool FindImpl(void*& storage, std::string_view storageName, std::string_v
 	return FindNthImpl(storage, storageName, pattern, 0, offset);
 }
 
+template<int Length = 4>
 static bool FindRIPImpl(void*& storage, std::string_view storageName, std::string_view pattern, ptrdiff_t offset)
 {
 	bool res = FindImpl(storage, storageName, pattern, offset);
 	if (res)
 	{
-		storage = GetRIPRelativeAddress(storage);
+		storage = GetRIPRelativeAddress<void, Length>(storage);
 	}
 	return res;
 }
@@ -58,6 +59,7 @@ static bool FindRIPImpl(void*& storage, std::string_view storageName, std::strin
 #define FindNth(storage, pattern, index, offset) FindNthImpl(storage, #storage, pattern, index, offset)
 #define Find(storage, pattern, offset) FindImpl(storage, #storage, pattern, offset)
 #define FindRIP(storage, pattern, offset) FindRIPImpl(storage, #storage, pattern, offset)
+#define FindRIPL(storage, pattern, offset, L) FindRIPImpl<L>(storage, #storage, pattern, offset)
 
 bool AddressManager::Init()
 {
@@ -210,6 +212,8 @@ bool AddressManager::Init()
 	res &= Find(fwEntity_GetBoneIndex, "48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B 01 83 4C 24", 0);
 	
 	res &= Find(DRAW_SPOT_LIGHT, "E8 ? ? ? ? F3 0F 10 85 ? ? ? ? 0F 2E 05 ? ? ? ? 75 08 F3 0F 10 05 ? ? ? ? 48 8D 4C 24 ? 45 33 C0 33 D2", -0x1CB);
+
+	res &= FindRIPL(ShaderQuality, "83 3D ? ? ? ? 00 75 09 48 8D 1D ? ? ? ? EB 14 48 8D 1D", 2, 5);
 
 	return res;
 }
